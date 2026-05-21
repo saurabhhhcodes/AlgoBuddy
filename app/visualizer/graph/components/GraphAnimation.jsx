@@ -40,10 +40,59 @@ function edgeId(edge) {
   return `${edge.from}-${edge.to}`;
 }
 
+function buildAdjacency() {
+  return nodes.reduce((graph, node) => {
+    graph[node.id] = [];
+    return graph;
+  }, {});
+}
+
+function getBfsTraversal(startNode) {
+  const graph = buildAdjacency();
+
+  edges.forEach((edge) => {
+    graph[edge.from].push(edge.to);
+    graph[edge.to].push(edge.from);
+  });
+
+  if (!graph[startNode]) {
+    return { order: [], treeEdges: [] };
+  }
+
+  const visited = new Set([startNode]);
+  const queue = [startNode];
+  const order = [];
+  const treeEdges = [];
+
+  while (queue.length > 0) {
+    const currentNode = queue.shift();
+    order.push(currentNode);
+
+    graph[currentNode].forEach((neighbor) => {
+      if (!visited.has(neighbor)) {
+        visited.add(neighbor);
+        queue.push(neighbor);
+        const found = edges.find(
+          (edge) =>
+            (edge.from === currentNode && edge.to === neighbor) ||
+            (edge.from === neighbor && edge.to === currentNode),
+        );
+        if (found) treeEdges.push(edgeId(found));
+      }
+    });
+  }
+
+  return { order, treeEdges };
+}
+
 export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
   const [step, setStep] = useState(0);
-  const sequence = sequences[type] || sequences.bfs;
+  const [startNode, setStartNode] = useState(nodes[0].id);
+  const isBfs = type === "bfs";
+  const bfsTraversal = useMemo(() => getBfsTraversal(startNode), [startNode]);
+  const sequence = isBfs ? bfsTraversal.order : sequences[type] || sequences.bfs;
   const current = sequence[Math.min(step, sequence.length - 1)];
+  const startNodeIsValid = !isBfs || sequence.length > 0;
 
   const activeNodes = useMemo(() => {
     if (type === "kruskal") {
@@ -54,6 +103,7 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
 
   const activeEdges = useMemo(() => {
     if (type === "kruskal") return new Set(sequence.slice(0, step + 1));
+    if (isBfs) return new Set(bfsTraversal.treeEdges.slice(0, step));
     const selected = new Set();
     const active = sequence.slice(0, step + 1);
     for (let i = 1; i < active.length; i += 1) {
@@ -65,10 +115,14 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
       if (found) selected.add(edgeId(found));
     }
     return selected;
-  }, [sequence, step, type]);
+  }, [bfsTraversal.treeEdges, isBfs, sequence, step, type]);
 
   const advance = () => setStep((value) => (value + 1) % sequence.length);
   const reset = () => setStep(0);
+  const changeStartNode = (event) => {
+    setStartNode(event.target.value);
+    setStep(0);
+  };
 
   return (
     <div className="mx-auto my-10 max-w-4xl rounded-2xl border border-surface-200 bg-white p-5 shadow-card dark:border-surface-800 dark:bg-surface-900">
@@ -81,8 +135,30 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
             {title}
           </h2>
         </div>
-        <div className="flex gap-2">
-          <button type="button" onClick={advance} className="btn-base bg-primary text-white hover:bg-primary-dark">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+          {isBfs ? (
+            <label className="flex flex-col gap-1 text-sm font-semibold text-surface-700 dark:text-surface-300">
+              Start vertex
+              <select
+                value={startNode}
+                onChange={changeStartNode}
+                className="h-10 rounded-lg border border-surface-300 bg-white px-3 text-sm font-semibold text-surface-900 outline-none transition-colors focus:border-primary dark:border-surface-700 dark:bg-surface-950 dark:text-white"
+                aria-label="Select BFS start vertex"
+              >
+                {nodes.map((node) => (
+                  <option key={node.id} value={node.id}>
+                    {node.id}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <button
+            type="button"
+            onClick={advance}
+            disabled={!startNodeIsValid}
+            className="btn-base bg-primary text-white hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+          >
             <Play className="h-4 w-4" />
             Next step
           </button>
@@ -149,6 +225,16 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
           <p className="mb-3 text-sm font-semibold text-surface-700 dark:text-surface-300">
             Step {step + 1} of {sequence.length}
           </p>
+          {isBfs ? (
+            <p className="mb-3 rounded-lg border border-primary/20 bg-primary/10 px-3 py-2 text-sm font-medium text-surface-700 dark:text-surface-200">
+              Starting from vertex <span className="font-bold text-primary">{startNode}</span>
+            </p>
+          ) : null}
+          {!startNodeIsValid ? (
+            <p className="rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-sm font-semibold text-surface-700 dark:text-surface-200">
+              Select an existing vertex before running BFS.
+            </p>
+          ) : null}
           <div className="space-y-2">
             {sequence.map((item, index) => (
               <div
