@@ -4,6 +4,13 @@ import { gsap } from "gsap";
 import ArrayGenerator from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
 
+const getFontSize = (value) => {
+  const len = String(value).length;
+  if (len <= 2) return "text-lg";
+  if (len === 3) return "text-sm";
+  return "text-xs";
+};
+
 const MergeSortVisualizer = () => {
   const [array, setArray] = useState([]);
   const [sorting, setSorting] = useState(false);
@@ -264,20 +271,54 @@ const MergeSortVisualizer = () => {
               </button>
             </div>
           </div>
-          {/* Speed controls */}
-          <div className="flex items-center gap-4 mb-4">
-            <span className="text-gray-700 dark:text-gray-300">Speed:</span>
-            <input
-              type="range"
-              min="0.5"
-              max="5"
-              step="0.5"
-              value={speed}
-              onChange={(e) => setSpeed(parseFloat(e.target.value))}
-              className="w-32"
-              disabled={sorting}
-            />
-            <span className="text-gray-700 dark:text-gray-300">{speed}x</span>
+
+          {/* Main Array Visualization */}
+          <div className="bg-white dark:bg-neutral-950 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-semibold mb-4">Main Array</h2>
+            {array.length > 0 ? (
+              <div className="flex flex-wrap gap-4 justify-center">
+                {array.map((value, index) => {
+                  const isComparing = currentIndices.comparing.includes(index);
+                  const isInRange = isInCurrentRange(index);
+                  const isMerging = isBeingMerged(index);
+                  const isSorted = sorted;
+
+                  return (
+                    <div key={index} className="flex flex-col items-center">
+                      <div
+                        className={`w-16 h-16 flex items-center justify-center rounded-lg border-2 transition-all duration-300 ${getFontSize(value)} font-medium
+                            ${
+                              isComparing
+                                ? "bg-red-400 dark:bg-red-400 border-red-600 dark:border-red-600 text-gray-800"
+                                : isMerging
+                                ? "bg-green-400 dark:bg-green-400 border-green-600 dark:border-green-600 text-gray-800"
+                                : isInRange
+                                ? "bg-yellow-400 dark:bg-yellow-400 border-yellow-600 dark:border-yellow-600 text-gray-800"
+                                : isSorted
+                                ? "bg-green-400 dark:bg-green-400 border-green-600 dark:border-green-600 text-gray-800"
+                                : "bg-blue-400 dark:bg-blue-500 border-blue-600 dark:border-blue-600 text-gray-800"
+                            }`}
+                      >
+                        {value}
+                      </div>
+                      <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                        {index}
+                        {isComparing && " (comparing)"}
+                        {isMerging && !isComparing && " (merging)"}
+                        {isInRange &&
+                          !isMerging &&
+                          !isComparing &&
+                          " (current)"}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                {sorting ? "Sorting..." : "Generate or enter an array to begin"}
+              </div>
+            )}
           </div>
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4 text-sm">

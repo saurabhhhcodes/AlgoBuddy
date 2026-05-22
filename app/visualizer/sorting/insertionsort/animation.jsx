@@ -4,6 +4,13 @@ import { gsap } from "gsap";
 import RandomArray from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
 
+const getFontSize = (value) => {
+  const len = String(value).length;
+  if (len <= 2) return "text-lg";
+  if (len === 3) return "text-sm";
+  return "text-xs";
+};
+
 const InsertionSortVisualizer = () => {
   const [array, setArray] = useState([]);
   const [sorting, setSorting] = useState(false);
@@ -156,7 +163,19 @@ const InsertionSortVisualizer = () => {
                 const isSorted = sorted || index <= currentIndices.sortedUpTo;
                 return (
                   <div key={index} className="flex flex-col items-center">
-                    <div ref={(el) => (barRefs.current[index] = el)} className={`bar w-16 h-16 flex items-center justify-center rounded-lg border-2 transition-all duration-300 text-lg font-medium ${isCurrent ? "bg-yellow-400" : isComparing ? "bg-red-400" : isSorted ? "bg-green-400" : "bg-blue-400"}`}>
+                    <div
+                      ref={(el) => (barRefs.current[index] = el)}
+                      className={`bar w-16 h-16 flex items-center justify-center rounded-lg border-2 transition-all duration-300 ${getFontSize(value)} font-medium
+                            ${
+                              isCurrent
+                                ? "bg-yellow-400 dark:bg-yellow-400 border-yellow-600 dark:border-yellow-600 dark:text-gray-800"
+                                : isComparing
+                                ? "bg-red-400 dark:bg-red-400 border-red-600 dark:border-red-600 dark:text-gray-800"
+                                : isSorted
+                                ? "bg-green-400 dark:bg-green-400 border-green-600 dark:border-green-600 dark:text-gray-800"
+                                : "bg-blue-400 dark:bg-blue-400 border-blue-600 dark:border-blue-600 dark:text-gray-800"
+                            }`}
+                    >
                       {value}
                     </div>
                     <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">{index}</div>
