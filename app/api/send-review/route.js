@@ -1,22 +1,8 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
-
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX_REQUESTS = 5;
-const rateLimitBuckets = new Map();
-
-function allowRequest(ip) {
-  const now = Date.now();
-  const bucket = rateLimitBuckets.get(ip);
-  if (!bucket || bucket.resetAt <= now) {
-    rateLimitBuckets.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-  if (bucket.count >= RATE_LIMIT_MAX_REQUESTS) return false;
-  bucket.count += 1;
-  return true;
-}
+import { verifyTurnstile } from "@/lib/verifyTurnstile";
 
 function escapeHtml(value) {
   return String(value)
@@ -40,43 +26,15 @@ function clampInt(value, min, max) {
   return int;
 }
 
-async function verifyTurnstile(captchaToken, ip) {
-  if (!process.env.TURNSTILE_SECRET_KEY) {
-    return {
-      ok: false,
-      error: "Server misconfigured: TURNSTILE_SECRET_KEY is not set",
-    };
-  }
-
-  const response = await fetch(
-    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        secret: process.env.TURNSTILE_SECRET_KEY,
-        response: captchaToken,
-        ...(ip && ip !== "unknown" ? { remoteip: ip } : {}),
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    return { ok: false, error: "Captcha verification request failed" };
-  }
-
-  const data = await response.json();
-  if (!data?.success) {
-    return { ok: false, error: "Captcha verification failed" };
-  }
-
-  return { ok: true };
-}
-
 export async function POST(request) {
   try {
     const ip = getClientIp(request.headers);
-    if (!allowRequest(ip)) {
+
+    // checkRateLimit uses a global Redis sliding-window counter in production
+    // so the limit is enforced across all serverless instances, not just the
+    // current one. Falls back to an in-memory check in local development.
+    const { allowed } = await checkRateLimit(`review:${ip}`);
+    if (!allowed) {
       return NextResponse.json(
         { success: false, error: "Too many requests. Please try again later." },
         { status: 429 }
@@ -102,7 +60,7 @@ export async function POST(request) {
       );
     }
 
-    const captcha = await verifyTurnstile(String(captchaToken), ip);
+    const captcha = await verifyTurnstile(String(captchaToken), { ip });
     if (!captcha.ok) {
       return NextResponse.json(
         { success: false, error: captcha.error },
@@ -152,7 +110,6 @@ export async function POST(request) {
 
     const inboxEmail = process.env.REVIEW_INBOX_EMAIL || process.env.EMAIL_USER;
 
-    // Create transporter
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -161,7 +118,6 @@ export async function POST(request) {
       },
     });
 
-    // Email options
     const mailOptions = {
       from: process.env.EMAIL_USER,
       replyTo: trimmedEmail,
@@ -179,12 +135,10 @@ export async function POST(request) {
       `,
     };
 
-    // Send email
     await transporter.sendMail(mailOptions);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error sending email:", error);
     return NextResponse.json(
       { success: false, error: "Failed to send email" },
       { status: 500 }

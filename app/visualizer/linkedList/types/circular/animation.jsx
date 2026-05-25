@@ -14,8 +14,9 @@ const CircularLinkedListVisualizer = () => {
   const [inputValue, setInputValue] = useState('');
   const [list, setList] = useState([]);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [diagramSize, setDiagramSize] = useState({ width: 0, height: 0 });
   const nodeIdCounter = useRef(1);
-  const containerRef = useRef(null);
+  const stageRef = useRef(null);
 
   // Generate random memory addresses
   const generateMemoryAddress = () => {
@@ -63,11 +64,13 @@ const CircularLinkedListVisualizer = () => {
     });
 
     // Arrow animations
-    gsap.from(arrows, {
-      opacity: 0,
-      duration: 0.3,
-      stagger: 0.1
-    });
+    if (arrows.length > 0) {
+      gsap.from(arrows, {
+        opacity: 0,
+        duration: 0.3,
+        stagger: 0.1
+      });
+    }
   };
 
   const resetList = () => {
@@ -89,6 +92,23 @@ const CircularLinkedListVisualizer = () => {
     if (list.length > 0) {
       animateNodeAddition(list[list.length - 1].id);
     }
+  }, [list]);
+
+  useEffect(() => {
+    const updateDiagramSize = () => {
+      const rect = stageRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setDiagramSize({ width: rect.width, height: rect.height });
+    };
+
+    const rafId = window.requestAnimationFrame(updateDiagramSize);
+
+    window.addEventListener('resize', updateDiagramSize);
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', updateDiagramSize);
+    };
   }, [list]);
 
   return (
@@ -138,7 +158,7 @@ const CircularLinkedListVisualizer = () => {
         </div>
 
         {/* Visualization Area */}
-        <div className="relative max-w-4xl mx-auto">
+          <div className="relative max-w-4xl mx-auto">
           {list.length === 0 ? (
             <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-dashed border-gray-300 dark:border-gray-700">
               <div className="inline-block p-6 bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
@@ -150,12 +170,67 @@ const CircularLinkedListVisualizer = () => {
               <p className="text-gray-500 dark:text-gray-400">Add nodes to visualize the circular linked list</p>
             </div>
           ) : (
-            <div className="relative" ref={containerRef}>
+            <div ref={stageRef} className="relative mx-auto" style={{ minHeight: '500px' }}>
               {/* Circular arrangement of nodes */}
               <div className="relative mx-auto" style={{ minHeight: '500px' }}>
+                {list.length > 1 && diagramSize.width > 0 && diagramSize.height > 0 && (
+                  <svg
+                    className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+                    style={{ zIndex: 0 }}
+                    viewBox={`0 0 ${diagramSize.width} ${diagramSize.height}`}
+                    preserveAspectRatio="none"
+                  >
+                    <defs>
+                      <marker
+                        id="circular-arrowhead"
+                        viewBox="0 0 10 10"
+                        refX="8"
+                        refY="5"
+                        markerWidth="6"
+                        markerHeight="6"
+                        orient="auto"
+                        markerUnits="strokeWidth"
+                      >
+                        <path d="M0,0 L10,5 L0,10 z" fill="#3b82f6" />
+                      </marker>
+                    </defs>
+
+                    {list.map((node, index) => {
+                      const step = (Math.PI * 2) / list.length;
+                      const startAngle = index * step;
+                      const nextAngle = ((index + 1) % list.length) * step;
+                      const adjustedNextAngle = nextAngle <= startAngle ? nextAngle + Math.PI * 2 : nextAngle;
+                      const arcRadius = Math.min(125, 95 + list.length * 8) + 72;
+                      const centerX = diagramSize.width / 2;
+                      const centerY = diagramSize.height / 2;
+
+                      const startX = centerX + arcRadius * Math.cos(startAngle);
+                      const startY = centerY + arcRadius * Math.sin(startAngle);
+                      const endX = centerX + arcRadius * Math.cos(adjustedNextAngle);
+                      const endY = centerY + arcRadius * Math.sin(adjustedNextAngle);
+                      const largeArcFlag = adjustedNextAngle - startAngle > Math.PI ? 1 : 0;
+
+                      return (
+                        <path
+                          key={`connection-${node.id}`}
+                          className="connection-arrow"
+                          d={`M ${startX} ${startY} A ${arcRadius} ${arcRadius} 0 ${largeArcFlag} 1 ${endX} ${endY}`}
+                          fill="none"
+                          stroke="#3b82f6"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          markerEnd="url(#circular-arrowhead)"
+                          opacity="0.9"
+                        />
+                      );
+                    })}
+                  </svg>
+                )}
+
                 {list.map((node, index) => {
                   const angle = (index * (360 / list.length)) * (Math.PI / 180);
-                  const radius = Math.min(200, 150 + list.length * 15);
+                  const radius = Math.min(125, 95 + list.length * 8);
                   const centerX = 0;
                   const centerY = 0;
                   const nodeX = centerX + radius * Math.cos(angle);
@@ -165,7 +240,7 @@ const CircularLinkedListVisualizer = () => {
                     <div
                       key={node.id}
                       data-node-id={node.id}
-                      className="absolute transition-all duration-300"
+                      className="absolute transition-all duration-300 z-10"
                       style={{
                         left: `calc(50% + ${nodeX}px)`,
                         top: `calc(50% + ${nodeY}px)`,
@@ -199,60 +274,6 @@ const CircularLinkedListVisualizer = () => {
                   );
                 })}
 
-                {/* Arrow connections */}
-                {list.length > 0 && (
-                  <svg className="absolute top-0 left-0 w-full h-full" style={{ zIndex: 1 }}>
-                    {list.map((node, index) => {
-                      const nextIndex = (index + 1) % list.length;
-                      const angle1 = (index * (360 / list.length)) * (Math.PI / 180);
-                      const angle2 = (nextIndex * (360 / list.length)) * (Math.PI / 180);
-                      const radius = Math.min(200, 150 + list.length * 15);
-                      const startX = 50 + (radius * Math.cos(angle1)) / 5;
-                      const startY = 50 + (radius * Math.sin(angle1)) / 5;
-                      const endX = 50 + (radius * Math.cos(angle2)) / 5;
-                      const endY = 50 + (radius * Math.sin(angle2)) / 5;
-                      
-                      // Calculate control points for curved arrows
-                      const controlX = 50;
-                      const controlY = 50;
-                      
-                      return (
-                        <g key={`connection-${node.id}`} className="connection-arrow">
-                          {/* Curved path */}
-                          <path
-                            d={`M ${startX}% ${startY}% Q ${controlX}% ${controlY}%, ${endX}% ${endY}%`}
-                            fill="none"
-                            stroke="#3b82f6"
-                            strokeWidth="2"
-                            strokeDasharray={index === list.length - 1 ? "5,5" : "0"}
-                          />
-                          
-                          {/* Arrowhead */}
-                          <marker 
-                            id={`arrowhead-${node.id}`} 
-                            markerWidth="10" 
-                            markerHeight="7" 
-                            refX="9" 
-                            refY="3.5" 
-                            orient="auto"
-                          >
-                            <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6" />
-                          </marker>
-                          
-                          {/* Arrow line with arrowhead */}
-                          <path
-                            d={`M ${startX}% ${startY}% Q ${controlX}% ${controlY}%, ${endX}% ${endY}%`}
-                            fill="none"
-                            stroke="#3b82f6"
-                            strokeWidth="2"
-                            markerEnd={`url(#arrowhead-${node.id})`}
-                            opacity="0.7"
-                          />
-                        </g>
-                      );
-                    })}
-                  </svg>
-                )}
               </div>
             </div>
           )}

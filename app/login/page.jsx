@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { useUser } from "@/app/contexts/UserContext";
 
 const Turnstile = dynamic(
   () => import("@marsidev/react-turnstile").then((mod) => mod.Turnstile),
@@ -22,6 +23,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [captchaToken, setCaptchaToken] = useState(null);
   const router = useRouter();
+  const { setUser } = useUser();
 
   const handleAuth = async (event) => {
     event?.preventDefault();
@@ -32,7 +34,6 @@ export default function LoginPage() {
       if (!captchaToken) throw new Error("Please complete captcha");
 
       if (isLogin) {
-        // Perform login server-side via API route (captcha + auth)
         const res = await fetch("/api/auth", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -44,19 +45,13 @@ export default function LoginPage() {
           }),
         });
         const data = await res.json();
-        if (!data.success)
-          throw new Error(data.message || "Login failed");
+        if (!data.success) throw new Error(data.message || "Login failed");
 
-        // Restore the session returned by the server
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        });
-        if (sessionError) throw sessionError;
-
+        // The API route set the session as cookies.
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user || null);
         router.push("/dashboard");
       } else {
-        // Signup flow remains the same
         const res = await fetch("/api/auth", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -83,8 +78,11 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
-    if (error) console.error("Google sign-in error:", error.message);
+    if (error) setError(error.message);
   };
 
   return (
@@ -96,6 +94,13 @@ export default function LoginPage() {
       >
         {/* Header */}
         <div className="bg-udemy-purple p-6 text-white">
+          <div className="mb-4 text-white hover:text-white/80 hover:-translate-x-1 transition cursor-pointer">
+            <Link
+              href="/"
+            >
+            ← Back To Home
+            </Link>
+          </div>
           <div>
             <h1 className="text-2xl font-bold font-serif">
               {isLogin ? "Welcome Back" : "Create Account"}
@@ -115,7 +120,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full flex items-center justify-center py-3 px-4 rounded-lg border border-udemy-border dark:border-udemy-dark-border bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text font-medium hover:bg-udemy-surface dark:hover:bg-udemy-dark-bg duration-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <img src="./google.webp" width={24} alt="" aria-hidden="true" />
+            <img src="/google.webp" width={24} alt="" aria-hidden="true" />
             <span className="mx-2">Continue with Google</span>
           </button>
         </div>

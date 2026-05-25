@@ -4,6 +4,13 @@ import { gsap } from "gsap";
 import ArrayGenerator from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
 
+const getFontSize = (value) => {
+  const len = String(value).length;
+  if (len <= 2) return "text-lg";
+  if (len === 3) return "text-sm";
+  return "text-xs";
+};
+
 const QuickSortVisualizer = () => {
   const [array, setArray] = useState([]);
   const [sorting, setSorting] = useState(false);
@@ -11,6 +18,8 @@ const QuickSortVisualizer = () => {
   const [speed, setSpeed] = useState(1);
   const [comparisons, setComparisons] = useState(0);
   const [swaps, setSwaps] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [totalSteps, setTotalSteps] = useState(0);
   const [currentIndices, setCurrentIndices] = useState({
     pivot: -1,
     left: -1,
@@ -20,11 +29,15 @@ const QuickSortVisualizer = () => {
     partitions: [],
   });
   const animationRef = useRef(null);
+  const isSortingRef = useRef(false);
+  const resolveRef = useRef(null);
 
   // Reset all stats and state
   const resetStats = () => {
     setComparisons(0);
     setSwaps(0);
+    setCurrentStep(0);
+    setTotalSteps(0);
     setCurrentIndices({
       pivot: -1,
       left: -1,
@@ -37,6 +50,13 @@ const QuickSortVisualizer = () => {
       clearTimeout(animationRef.current);
     }
   };
+
+  // Helper: cancellable delay
+  const cancellableDelay = (ms) =>
+    new Promise((resolve) => {
+      resolveRef.current = resolve;
+      animationRef.current = setTimeout(resolve, ms);
+    });
 
   // Partition function for Quick Sort
   const partition = async (arr, low, high) => {
@@ -58,9 +78,8 @@ const QuickSortVisualizer = () => {
       }));
 
       setComparisons((prev) => prev + 1);
-      await new Promise(
-        (resolve) => (animationRef.current = setTimeout(resolve, 1000 / speed))
-      );
+      await cancellableDelay(1000 / speed);
+      if (!isSortingRef.current) return -1;
 
       if (arr[j] < pivot) {
         i++;
@@ -76,10 +95,8 @@ const QuickSortVisualizer = () => {
             { scale: 1.1, opacity: 1, duration: 0.3, stagger: 0.05 }
           );
         }
-        await new Promise(
-          (resolve) =>
-            (animationRef.current = setTimeout(resolve, 1000 / speed))
-        );
+        await cancellableDelay(1000 / speed);
+        if (!isSortingRef.current) return -1;
       }
     }
 
@@ -87,17 +104,16 @@ const QuickSortVisualizer = () => {
     setSwaps((prev) => prev + 1);
     setArray([...arr]);
     // GSAP animation after swap/visual update
-    const bars = document.querySelectorAll(".array-bar");
-    if (bars.length > 0) {
+    const bars2 = document.querySelectorAll(".array-bar");
+    if (bars2.length > 0) {
       gsap.fromTo(
-        bars,
+        bars2,
         { scale: 1, opacity: 0.5 },
         { scale: 1.1, opacity: 1, duration: 0.3, stagger: 0.05 }
       );
     }
-    await new Promise(
-      (resolve) => (animationRef.current = setTimeout(resolve, 1000 / speed))
-    );
+    await cancellableDelay(1000 / speed);
+    if (!isSortingRef.current) return -1;
 
     return i + 1;
   };
@@ -106,8 +122,12 @@ const QuickSortVisualizer = () => {
   const quickSort = async () => {
     if (sorted || sorting || array.length === 0) return;
 
+    isSortingRef.current = true;
     setSorting(true);
     let arr = [...array];
+    const n = arr.length;
+    setTotalSteps(Math.floor((n * (n - 1)) / 2));
+    setCurrentStep(0);
     let stack = [];
     let low = 0;
     let high = arr.length - 1;
@@ -125,6 +145,7 @@ const QuickSortVisualizer = () => {
         }));
 
         const pi = await partition(arr, low, high);
+        if (!isSortingRef.current) return;
 
         setCurrentIndices((prev) => ({
           ...prev,
@@ -139,10 +160,8 @@ const QuickSortVisualizer = () => {
         stack.push({ low: pi + 1, high });
         stack.push({ low, high: pi - 1 });
 
-        await new Promise(
-          (resolve) =>
-            (animationRef.current = setTimeout(resolve, 1000 / speed))
-        );
+        await cancellableDelay(1000 / speed);
+        if (!isSortingRef.current) return;
 
         // Remove completed partition
         setCurrentIndices((prev) => ({
@@ -153,8 +172,10 @@ const QuickSortVisualizer = () => {
         }));
       }
     }
+        setCurrentStep((prev) => prev + 1);
 
     setArray([...arr]);
+    isSortingRef.current = false;
     setSorting(false);
     setSorted(true);
     setCurrentIndices({
@@ -169,6 +190,12 @@ const QuickSortVisualizer = () => {
 
   // Reset everything
   const reset = () => {
+    // Unblock any suspended async loop immediately
+    isSortingRef.current = false;
+    if (resolveRef.current) {
+      resolveRef.current();
+      resolveRef.current = null;
+    }
     if (animationRef.current) {
       clearTimeout(animationRef.current);
     }
@@ -254,7 +281,7 @@ const QuickSortVisualizer = () => {
   return (
     <main className="container mx-auto px-6 pt-4 pb-6">
       <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8">
-        Visualize Quick Sort's divide-and-conquer approach with interactive
+        Visualize Quick Sort&apos;s divide-and-conquer approach with interactive
         partitions
       </p>
 
@@ -272,7 +299,7 @@ const QuickSortVisualizer = () => {
                 disabled={sorting}
               />
               <CustomArrayInput
-                onSubmit={(newArray) => {
+                onUseCustomArray={(newArray) => {
                   setArray(newArray);
                   setSorted(false);
                   resetStats();
@@ -324,6 +351,19 @@ const QuickSortVisualizer = () => {
               <div className="text-2xl">{swaps}</div>
             </div>
           </div>
+          <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+            <div className="font-medium">Step:</div>
+            <div className="text-xl font-bold">
+              {totalSteps > 0 ? `${currentStep} / ${totalSteps}` : "—"}
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              {currentStep > 0 && !sorted
+                ? `Partitioning around pivot at index ${currentIndices.pivot}`
+                : sorted
+                ? "Sorting complete!"
+                : "Start sorting to see steps"}
+            </div>
+          </div>
         </div>
 
         {/* Main Array Visualization */}
@@ -343,7 +383,7 @@ const QuickSortVisualizer = () => {
                 return (
                   <div key={index} className="flex flex-col items-center">
                     <div
-                      className={`array-bar w-16 h-16 flex items-center justify-center rounded-lg border-2 transition-all duration-300 text-lg font-medium
+                      className={`array-bar w-16 h-16 flex items-center justify-center rounded-lg border-2 transition-all duration-300 ${getFontSize(value)} font-medium
                             ${
                               isPivot
                                 ? "bg-red-400 dark:bg-red-600 border-red-600 dark:border-red-400"

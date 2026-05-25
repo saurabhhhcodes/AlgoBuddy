@@ -1,8 +1,15 @@
-'use client';
-import React, { useState, useRef, useEffect } from 'react';
+"use client";
+import React, { useState, useRef, useEffect } from "react";
 import { gsap } from "gsap";
-import ArrayGenerator from '@/app/components/ui/randomArray';
-import CustomArrayInput from '@/app/components/ui/customArrayInput';
+import ArrayGenerator from "@/app/components/ui/randomArray";
+import CustomArrayInput from "@/app/components/ui/customArrayInput";
+
+const getFontSize = (value) => {
+  const len = String(value).length;
+  if (len <= 2) return "text-lg";
+  if (len === 3) return "text-sm";
+  return "text-xs";
+};
 
 const SelectionSortVisualizer = () => {
     const [array, setArray] = useState([]);
@@ -11,6 +18,8 @@ const SelectionSortVisualizer = () => {
     const [speed, setSpeed] = useState(1);
     const [comparisons, setComparisons] = useState(0);
     const [swaps, setSwaps] = useState(0);
+    const [currentStep, setCurrentStep] = useState(0);
+    const [totalSteps, setTotalSteps] = useState(0);
     const [currentIndices, setCurrentIndices] = useState({ 
       i: -1,    // Current outer loop index
       j: -1,    // Current inner loop index
@@ -36,6 +45,8 @@ const SelectionSortVisualizer = () => {
     const resetStats = () => {
       setComparisons(0);
       setSwaps(0);
+      setCurrentStep(0);
+      setTotalSteps(0);
       setCurrentIndices({ i: -1, j: -1, min: -1 });
       if (animationRef.current) {
         clearTimeout(animationRef.current);
@@ -51,6 +62,8 @@ const SelectionSortVisualizer = () => {
       let n = arr.length;
       let tempSwaps = 0;
       let tempComparisons = 0;
+      setTotalSteps(Math.floor((n * (n - 1)) / 2));
+      setCurrentStep(0);
       
       for (let i = 0; i < n - 1; i++) {
         let minIndex = i;
@@ -60,6 +73,7 @@ const SelectionSortVisualizer = () => {
           setCurrentIndices(prev => ({ ...prev, j, min: minIndex }));
           tempComparisons++;
           setComparisons(tempComparisons);
+          setCurrentStep((prev) => prev + 1);
   
           await new Promise(resolve => 
             animationRef.current = setTimeout(resolve, 1000 / speed)
@@ -168,7 +182,7 @@ const SelectionSortVisualizer = () => {
                     maxValue={100}
                   />
                   <CustomArrayInput
-                    onSubmit={handleCustomArray}
+                    onUseCustomArray={handleCustomArray}
                     disabled={sorting}
                     placeholder="e.g. 5, 3, 8, 1, 2"
                   />
@@ -219,6 +233,11 @@ const SelectionSortVisualizer = () => {
                   <div className="text-2xl">{swaps}</div>
                 </div>
               </div>
+              <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+                <div className="font-medium">Step:</div>
+                <div className="text-xl font-bold">{totalSteps > 0 ? `${currentStep} / ${totalSteps}` : '—'}</div>
+                <div className="text-xs text-gray-500 mt-1">{currentStep > 0 && !sorted ? `Finding minimum from index ${currentIndices.i}` : sorted ? 'Sorting complete!' : 'Start sorting to see steps'}</div>
+              </div>
             </div>
 
             {/* Visualization */}
@@ -236,7 +255,7 @@ const SelectionSortVisualizer = () => {
                     return (
                       <div key={index} className="flex flex-col items-center">
                         <div
-                          className={`array-bar w-16 h-16 flex items-center justify-center rounded-lg border-2 transition-all duration-300 text-lg font-medium
+                          className={`array-bar w-16 h-16 flex items-center justify-center rounded-lg border-2 transition-all duration-300 ${getFontSize(value)} font-medium
                             ${
                               isCurrent
                                 ? "bg-yellow-400 dark:bg-yellow-600 border-yellow-600 dark:border-yellow-400"

@@ -6,7 +6,7 @@ import ArticleActions from "@/app/components/ui/ArticleActions";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import { getGraphRelatedLinks } from "@/app/visualizer/graph/data";
 
-export default function GraphTopicPage({ topic, Animation }) {
+export default function GraphTopicPage({ topic, Animation, startNode }) {
   const paths = [
     { name: "Home", href: "/" },
     { name: "Visualizer", href: "/visualizer" },
@@ -37,7 +37,7 @@ export default function GraphTopicPage({ topic, Animation }) {
 
           <div className="mx-auto my-10 h-px max-w-4xl bg-gradient-to-r from-transparent via-surface-200 to-transparent dark:via-surface-800" />
 
-          <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_320px]">
+          <div className="mx-auto w-full grid gap-6 lg:grid-cols-[2fr_320px]">
             <article className="rounded-2xl border border-surface-200 bg-white shadow-card dark:border-surface-800 dark:bg-surface-900">
               <section className="border-b border-surface-100 p-6 dark:border-surface-800">
                 <h2 className="mb-4 text-2xl font-bold">Core idea</h2>
@@ -64,7 +64,10 @@ export default function GraphTopicPage({ topic, Animation }) {
               <h2 className="mb-4 text-xl font-bold">Complexity</h2>
               <div className="space-y-3">
                 {topic.complexity.map((item) => (
-                  <div key={item.label} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm dark:bg-surface-950">
+                  <div
+                    key={item.label}
+                    className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm dark:bg-surface-950"
+                  >
                     <span className="text-surface-500 dark:text-surface-400">{item.label}</span>
                     <span className="font-semibold text-surface-900 dark:text-white">{item.value}</span>
                   </div>
@@ -75,7 +78,7 @@ export default function GraphTopicPage({ topic, Animation }) {
         </section>
 
         <section className="container-app">
-          <Animation />
+          <Animation startNode={startNode} />
         </section>
 
         <section className="container-app">
