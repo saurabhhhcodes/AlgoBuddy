@@ -137,6 +137,7 @@ const Footer = () => {
             <div>
               <h3 className={footerHeading}>Quick Links</h3>
               <div className="space-y-4">
+<<<<<<< HEAD
                 <Link href="/" className={footerLink}>
                   Home
                 </Link>
@@ -155,6 +156,14 @@ const Footer = () => {
                 <Link href="/contactus" className={footerLink}>
                   Contact Us
                 </Link>
+=======
+                <Link href="/" className={footerLink}>Home</Link>
+                <Link href="#" className={footerLink}>Visualizations</Link>
+                <Link href="#" className={footerLink}>Data Structures</Link>
+                <Link href="#" className={footerLink}>Algorithms</Link>
+                <Link href="/about" className={footerLink}>About Us</Link>
+                <Link href="/contactus" className={footerLink}>Contact Us</Link>
+>>>>>>> upstream/main
               </div>
             </div>
 
@@ -162,6 +171,7 @@ const Footer = () => {
             <div>
               <h3 className={footerHeading}>Resources</h3>
               <div className="space-y-4">
+<<<<<<< HEAD
                 {/* <Link href="/tutorials" className={footerLink}>
                   Tutorials
                 </Link>
@@ -180,6 +190,14 @@ const Footer = () => {
                 <Link href="/faq" className={footerLink}>
                   FAQ
                 </Link>
+=======
+                <Link href="#" className={footerLink}>Tutorials</Link>
+                <Link href="#" className={footerLink}>Cheatsheets</Link>
+                <Link href="#" className={footerLink}>Practice Problems</Link>
+                <Link href="#" className={footerLink}>Roadmaps</Link>
+                <Link href="#" className={footerLink}>Blog</Link>
+                <Link href="#" className={footerLink}>FAQ</Link>
+>>>>>>> upstream/main
               </div>
             </div>
 
@@ -246,10 +264,14 @@ const Footer = () => {
                 >
                   Cookies Policy
                 </button>
+<<<<<<< HEAD
                 <button
                   onClick={() => setShowCodeOfConductModal(true)}
                   className={footerLink}
                 >
+=======
+                <Link href="#" className={footerLink}>
+>>>>>>> upstream/main
                   Code of Conduct
                 </button>
               </div>
@@ -287,4 +309,8 @@ const Footer = () => {
   )
 }
 
+<<<<<<< HEAD
 export default Footer
+=======
+export default Footer;
+>>>>>>> upstream/main

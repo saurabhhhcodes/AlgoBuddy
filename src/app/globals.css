@@ -91,7 +91,7 @@ body {
 .visualizer-page h4,
 .visualizer-page h5,
 .visualizer-page h6 {
-  font-family: 'Source Sans 3', 'Source Sans Pro', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Source Sans 3', 'Source Sans Pro', ui-sans-serif, system-ui, 'sans-serif';
   font-weight: 700;
 }
 

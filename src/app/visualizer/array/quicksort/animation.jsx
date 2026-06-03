@@ -7,6 +7,7 @@ import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { quickSortGenerator } from "@/features/algorithms/array/quickSortLogic";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -90,38 +91,59 @@ const QuickSortVisualizer = () => {
     await checkPause();
   };
 
-  // Partition function for Quick Sort
-  const partition = async (arr, low, high) => {
-    const pivot = arr[high];
-    let i = low - 1;
+  // Quick Sort algorithm
+  const quickSort = async () => {
+    if (sorted || sorting || array.length === 0) return;
 
-    setCurrentPhase(`Partitioning range [${low}, ${high}]`);
-    setStepExplanation(`Choosing pivot ${pivot} at index ${high}.`);
-    setCurrentIndices((prev) => ({
-      ...prev,
-      pivot: high,
-      left: low,
-      right: high - 1,
-    }));
+    isSortingRef.current = true;
+    setSorting(true);
 
-    for (let j = low; j < high; j++) {
-      setCurrentIndices((prev) => ({
-        ...prev,
-        left: j,
-        right: i,
-      }));
-      setStepExplanation(`Comparing ${arr[j]} at index ${j} with pivot ${pivot}.`);
-      setComparisons((prev) => prev + 1);
-      setCurrentStep((prev) => prev + 1);
-      await cancellableDelay(1000);
-      if (!isSortingRef.current) return -1;
+    const generator = quickSortGenerator(array);
 
-      if (arr[j] < pivot) {
-        i++;
-        setStepExplanation(`Since ${arr[j]} < pivot, swapping elements at indices ${i} and ${j}.`);
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-        setSwaps((prev) => prev + 1);
-        setArray([...arr]);
+    for (const frame of generator) {
+      if (!isSortingRef.current) return;
+      const { type, payload } = frame;
+
+      if (type === 'init') {
+        setTotalSteps(payload.totalSteps);
+        setCurrentStep(0);
+      }
+      else if (type === 'partition_start') {
+        setCurrentPhase(`Partition Step: [${payload.low}, ${payload.high}]`);
+        setStepExplanation(`Processing partition range [${payload.low}, ${payload.high}] in the current Quick Sort stack.`);
+        setCurrentIndices((prev) => ({
+          ...prev,
+          partitions: payload.partitions,
+          stack: payload.stack,
+        }));
+      }
+      else if (type === 'pivot_chosen') {
+        setCurrentPhase(`Partitioning range [${payload.low}, ${payload.high}]`);
+        setStepExplanation(`Choosing pivot ${payload.pivot} at index ${payload.high}.`);
+        setCurrentIndices((prev) => ({
+          ...prev,
+          pivot: payload.high,
+          left: payload.low,
+          right: payload.right,
+        }));
+      }
+      else if (type === 'comparing') {
+        setCurrentIndices((prev) => ({
+          ...prev,
+          left: payload.j,
+          right: payload.i,
+        }));
+        setStepExplanation(`Comparing ${payload.arr[payload.j]} at index ${payload.j} with pivot ${payload.pivot}.`);
+        setComparisons(payload.comparisons);
+        setCurrentStep(payload.step);
+        await cancellableDelay(1000);
+      }
+      else if (type === 'swap_needed') {
+        setStepExplanation(`Since ${payload.arr[payload.j]} < pivot, swapping elements at indices ${payload.i} and ${payload.j}.`);
+      }
+      else if (type === 'swapped') {
+        setSwaps(payload.swaps);
+        setArray(payload.arr);
         // GSAP animation after swap/visual update
         const bars = document.querySelectorAll(".array-bar");
         if (bars.length > 0) {
@@ -132,106 +154,63 @@ const QuickSortVisualizer = () => {
           );
         }
         await cancellableDelay(1000);
-        if (!isSortingRef.current) return -1;
-      } else {
-        setStepExplanation(`Since ${arr[j]} >= pivot, leaving ${arr[j]} on the right side.`);
-        await cancellableDelay(1000);
-        if (!isSortingRef.current) return -1;
       }
-    }
-
-    setStepExplanation(`Placing pivot ${pivot} into its correct position at index ${i + 1}.`);
-    [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
-    setSwaps((prev) => prev + 1);
-    setArray([...arr]);
-    // GSAP animation after swap/visual update
-    const bars2 = document.querySelectorAll(".array-bar");
-    if (bars2.length > 0) {
-      gsap.fromTo(
-        bars2,
-        { scale: 1, opacity: 0.5 },
-        { scale: 1.1, opacity: 1, duration: 0.3, stagger: 0.05 }
-      );
-    }
-    await cancellableDelay(1000);
-    if (!isSortingRef.current) return -1;
-
-    return i + 1;
-  };
-
-  // Quick Sort algorithm
-  const quickSort = async () => {
-    if (sorted || sorting || array.length === 0) return;
-
-    isSortingRef.current = true;
-    setSorting(true);
-    let arr = [...array];
-    const n = arr.length;
-    setTotalSteps(Math.floor((n * (n - 1)) / 2));
-    setCurrentStep(0);
-    let stack = [];
-    let low = 0;
-    let high = arr.length - 1;
-
-    stack.push({ low, high });
-
-    while (stack.length > 0) {
-      const { low, high } = stack.pop();
-
-      if (low < high) {
-        setCurrentPhase(`Partition Step: [${low}, ${high}]`);
-        setStepExplanation(`Processing partition range [${low}, ${high}] in the current Quick Sort stack.`);
-        // Show current partition being processed
+      else if (type === 'no_swap') {
+        setStepExplanation(`Since ${payload.arr[payload.j]} >= pivot, leaving ${payload.arr[payload.j]} on the right side.`);
+        await cancellableDelay(1000);
+      }
+      else if (type === 'pivot_swap_needed') {
+        setStepExplanation(`Placing pivot ${payload.pivot} into its correct position at index ${payload.i}.`);
+      }
+      else if (type === 'pivot_swapped') {
+        setSwaps(payload.swaps);
+        setArray(payload.arr);
+        // GSAP animation after swap/visual update
+        const bars2 = document.querySelectorAll(".array-bar");
+        if (bars2.length > 0) {
+          gsap.fromTo(
+            bars2,
+            { scale: 1, opacity: 0.5 },
+            { scale: 1.1, opacity: 1, duration: 0.3, stagger: 0.05 }
+          );
+        }
+        await cancellableDelay(1000);
+      }
+      else if (type === 'partition_completed') {
         setCurrentIndices((prev) => ({
           ...prev,
-          partitions: [...prev.partitions, { low, high }],
-          stack: [...stack],
-        }));
-
-        const pi = await partition(arr, low, high);
-        if (!isSortingRef.current) return;
-
-        setCurrentIndices((prev) => ({
-          ...prev,
-          partitionIndex: pi,
-          stack: [...stack],
+          partitionIndex: payload.pi,
+          stack: payload.stack,
           pivot: -1,
           left: -1,
           right: -1,
         }));
-
-        setStepExplanation(`Partition completed. Pivot is now at index ${pi}.`);
+        setStepExplanation(`Partition completed. Pivot is now at index ${payload.pi}.`);
         await cancellableDelay(1000);
-        if (!isSortingRef.current) return;
-
-        // Push right subarray first so left is processed first
-        stack.push({ low: pi + 1, high });
-        stack.push({ low, high: pi - 1 });
-
-        // Remove completed partition
+      }
+      else if (type === 'stack_updated') {
         setCurrentIndices((prev) => ({
           ...prev,
-          partitions: prev.partitions.filter(
-            (p) => !(p.low === low && p.high === high)
-          ),
+          partitions: payload.partitions,
         }));
       }
+      else if (type === 'completed') {
+        setArray(payload.arr);
+        isSortingRef.current = false;
+        setSorting(false);
+        setSorted(true);
+        setCurrentPhase("Completed");
+        setStepExplanation("Array is fully sorted.");
+        setCurrentIndices({
+          pivot: -1,
+          left: -1,
+          right: -1,
+          partitionIndex: -1,
+          stack: [],
+          partitions: [],
+        });
+      }
     }
-
-    setArray([...arr]);
-    isSortingRef.current = false;
-    setSorting(false);
-    setSorted(true);
-    setCurrentPhase("Completed");
-    setStepExplanation("Array is fully sorted.");
-    setCurrentIndices({
-      pivot: -1,
-      left: -1,
-      right: -1,
-      partitionIndex: -1,
-      stack: [],
-      partitions: [],
-    });
   };
 
   const reset = () => {
