@@ -198,9 +198,8 @@ const Footer = () => {
                 >
                   <FaDiscord className="w-4 h-4" /> Discord
                 </a>
-                <a href="https://github.com/PankajSingh34/AlgoBuddy" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"></a>
                 <a
-                  href="https://github.com/PankajSingh34"
+                  href="https://github.com/PankajSingh34/AlgoBuddy"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
@@ -208,10 +207,20 @@ const Footer = () => {
                   <FaGithub className="w-4 h-4" /> GitHub
                 </a>
                 <a
-                  href="#"
+                  href="https://www.youtube.com/@AlgoBuddy.connect"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
                 >
                   <FaYoutube className="w-4 h-4" /> YouTube
+                </a>
+                <a
+                  href="https://www.instagram.com/algobuddy.connect/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+                >
+                  <FaInstagram className="w-4 h-4" /> Instagram
                 </a>
                 <a
                   href="https://x.com/AlgoBuddy_"
