@@ -1,5 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { getAuthenticatedUser } from "@/lib/auth";
 import {
   createCollaborationSession,
   listCollaborationSessions,
@@ -7,43 +6,6 @@ import {
 } from "@/lib/collaboration/sessionStore";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
-
-function getSupabaseConfig() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseAnonKey) return null;
-  try {
-    const parsed = new URL(supabaseUrl);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
-  } catch {
-    return null;
-  }
-  return { supabaseUrl, supabaseAnonKey };
-}
-
-async function getAuthenticatedUser() {
-  const config = getSupabaseConfig();
-  if (!config) {
-    return { user: null, configured: false };
-  }
-
-  const cookieStore = await cookies();
-  const client = createServerClient(config.supabaseUrl, config.supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          cookieStore.set(name, value, options);
-        });
-      },
-    },
-  });
-
-  const { data } = await client.auth.getUser();
-  return { user: data?.user ?? null, configured: true };
-}
 
 export async function GET(request) {
   const ip = getClientIp(request.headers);
@@ -79,18 +41,22 @@ export async function POST(request) {
     if (!validateCsrfOrigin(request)) {
       return Response.json({ error: "CSRF validation failed" }, { status: 403 });
     }
-    const { user, configured } = await getAuthenticatedUser();
+    const authResult = await getAuthenticatedUser();
     
-    if (process.env.NODE_ENV === "production" && !configured) {
-      return Response.json({ error: "Server misconfigured: Authentication environment variables are missing." }, { status: 500 });
-    }
-
-    if (configured && !user) {
+    if (!authResult.success) {
+      if (authResult.type === "CONFIG_ERROR" || authResult.type === "AUTH_PROVIDER_ERROR") {
+        return Response.json(
+          { error: "Authentication service unavailable" },
+          { status: 500 },
+        );
+      }
       return Response.json(
         { error: "Authentication required" },
         { status: 401 },
       );
     }
+
+    const user = authResult.user;
 
     const ip = getClientIp(request.headers);
     const { allowed } = await checkRateLimit(`collab:create:${ip}`);
@@ -123,7 +89,7 @@ export async function POST(request) {
 
     return Response.json({
       session: result.session,
-      ...(configured ? { sessionSecret: result.sessionSecret } : {}),
+      sessionSecret: result.sessionSecret,
       joinUrl: `/visualizer/dry-run?session=${result.session.joinCode}`,
     });
   } catch (error) {
