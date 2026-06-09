@@ -32,7 +32,8 @@ import CompanyLogos from "@/app/components/practice/CompanyLogos";
 import TheoryDrawer from "@/app/components/practice/TheoryDrawer";
 import { practiceData } from "@/lib/practiceData";
 import { useUser } from "@/features/user/UserContext";
-
+import { supabase } from "@/lib/supabase";
+import { useProblemBookmarks } from "@/app/hooks/useProblemBookmarks";
 // Local storage theme helpers
 function getStoredTheme() {
   if (typeof window === "undefined") return "light";
@@ -139,10 +140,13 @@ export default function PracticePage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [progress, setProgress] = useState({});
+  const [backendStats, setBackendStats] = useState(null);
   const [mounted, setMounted] = useState(false);
   const [expandedTopics, setExpandedTopics] = useState({});
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
+  const { bookmarks, isBookmarked } = useProblemBookmarks();
 
   const [theme, setTheme] = useState("light");
   const [themeMounted, setThemeMounted] = useState(false);
@@ -163,14 +167,36 @@ export default function PracticePage() {
     applyTheme(currentTheme);
     setThemeMounted(true);
 
-    try {
-      const saved = localStorage.getItem("algobuddy_practice_progress");
-      if (saved) {
-        setProgress(JSON.parse(saved));
+    const fetchProgress = async () => {
+      try {
+        const useSpringBoot = process.env.NEXT_PUBLIC_USE_SPRING_BOOT_API === "true";
+        if (useSpringBoot) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            const baseUrl = process.env.NEXT_PUBLIC_SPRING_BOOT_API_URL || "http://localhost:8080";
+            const res = await fetch(`${baseUrl}/api/v1/practice/progress`, {
+              headers: { "Authorization": `Bearer ${session.access_token}` }
+            });
+            if (res.ok) {
+              const data = await res.json();
+              setProgress(data.progress || {});
+              setBackendStats(data);
+              return;
+            }
+          }
+        }
+        
+        // Fallback to localStorage
+        const saved = localStorage.getItem("algobuddy_practice_progress");
+        if (saved) {
+          setProgress(JSON.parse(saved));
+        }
+      } catch (e) {
+        console.error("Failed to load practice progress:", e);
       }
-    } catch (e) {
-      console.error("Failed to load practice progress:", e);
-    }
+    };
+
+    fetchProgress();
   }, []);
 
   const toggleTheme = () => {
@@ -224,10 +250,10 @@ export default function PracticePage() {
       medium: { total: mediumTotal, solved: mediumSolved },
       hard: { total: hardTotal, solved: hardSolved },
       pct: totalProblems > 0 ? Math.round((solvedProblems / totalProblems) * 100) : 0,
-      visualizedCount: 97, // mock value as per design
-      streak: 12, // mock value as per design
+      visualizedCount: backendStats?.visualizedCount || 97, // from backend if available, else mock
+      streak: backendStats?.currentStreak || 12, // from backend if available, else mock
     };
-  }, [progress]);
+  }, [progress, backendStats]);
 
   // Compute topic-wise progress
   const topicStats = useMemo(() => {
@@ -252,12 +278,24 @@ export default function PracticePage() {
     return map;
   }, [progress]);
 
-  // Filter roadmaps based on search
+  // Filter roadmaps based on search and bookmarks
   const filteredRoadmap = useMemo(() => {
-    if (!search.trim()) return practiceData;
+    let baseData = practiceData;
+    
+    if (showBookmarksOnly) {
+      baseData = baseData.map((topic) => {
+        const filteredSubsections = topic.subsections.map((sub) => {
+          return { ...sub, items: sub.items.filter((item) => isBookmarked(item.id)) };
+        }).filter((sub) => sub.items.length > 0);
+        if (filteredSubsections.length > 0) return { ...topic, subsections: filteredSubsections };
+        return null;
+      }).filter(Boolean);
+    }
+
+    if (!search.trim()) return baseData;
     const q = search.trim().toLowerCase();
 
-    return practiceData.map((topic) => {
+    return baseData.map((topic) => {
       const topicMatches = 
         topic.title.toLowerCase().includes(q) || 
         topic.desc.toLowerCase().includes(q);
@@ -278,7 +316,7 @@ export default function PracticePage() {
       }
       return null;
     }).filter(Boolean);
-  }, [search]);
+  }, [search, showBookmarksOnly, bookmarks, isBookmarked]);
 
   // Automatically expand matches during search
   useEffect(() => {
@@ -310,11 +348,39 @@ export default function PracticePage() {
     setExpandedTopics({});
   };
 
-  const handleStatusToggle = (problemId, currentStatus) => {
+  const handleStatusToggle = async (problemId, currentStatus) => {
     const nextStatus = currentStatus === "Completed" ? "Not Started" : "Completed";
     const updated = { ...progress, [problemId]: nextStatus };
     setProgress(updated);
+    
     try {
+      const useSpringBoot = process.env.NEXT_PUBLIC_USE_SPRING_BOOT_API === "true";
+      console.log("[DEBUG] useSpringBoot:", useSpringBoot, "Value:", process.env.NEXT_PUBLIC_USE_SPRING_BOOT_API);
+      
+      if (useSpringBoot) {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("[DEBUG] User session exists:", !!session?.access_token);
+        
+        if (session?.access_token) {
+          console.log("[DEBUG] Making POST request to Spring Boot backend...");
+          const baseUrl = process.env.NEXT_PUBLIC_SPRING_BOOT_API_URL || "http://localhost:8080";
+          const res = await fetch(`${baseUrl}/api/v1/practice/progress`, {
+            method: "POST",
+            headers: { 
+              "Authorization": `Bearer ${session.access_token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ problemId, status: nextStatus })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setBackendStats(data);
+          }
+          return;
+        }
+      }
+      
+      // Fallback
       localStorage.setItem("algobuddy_practice_progress", JSON.stringify(updated));
     } catch (e) {
       console.error("Failed to update status:", e);
@@ -340,13 +406,29 @@ export default function PracticePage() {
             {[
               { label: "Home", icon: Home, href: "/" },
               { label: "Visualizer", icon: Play, href: "/visualizer" },
-              { label: "Practice", icon: BookOpen, href: "/practice", active: true },
+              { label: "Practice", icon: BookOpen, action: () => setShowBookmarksOnly(false), active: !showBookmarksOnly },
               { label: "Arena", icon: Trophy, href: "/arena" },
-              { label: "Bookmarks", icon: Bookmark, href: "#" },
+              { label: "Bookmarks", icon: Bookmark, action: () => setShowBookmarksOnly(true), active: showBookmarksOnly },
               { label: "Challenges", icon: Zap, href: "#" },
               { label: "Profile", icon: User, href: "#" }
             ].map((item, idx) => {
               const Icon = item.icon;
+              if (item.action) {
+                return (
+                  <button
+                    key={idx}
+                    onClick={item.action}
+                    className={`w-full flex items-center gap-3.5 px-3.5 py-3 rounded-xl text-sm font-semibold transition ${
+                      item.active
+                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light"
+                        : "text-slate-500 hover:text-slate-800 hover:bg-slate-50 dark:text-neutral-400 dark:hover:text-neutral-200 dark:hover:bg-neutral-800/50"
+                    }`}
+                  >
+                    <Icon size={18} />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              }
               return (
                 <Link
                   key={idx}
@@ -447,15 +529,16 @@ export default function PracticePage() {
           </div>
         </div>
 
+
         {/* DSA Roadmap Accordions */}
         <section className="space-y-5">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h2 className="text-base font-bold text-slate-800 dark:text-white uppercase tracking-wider">
-                DSA Roadmap
+                {showBookmarksOnly ? "Your Bookmarked Problems" : "DSA Roadmap"}
               </h2>
               <p className="text-xs text-slate-400 dark:text-neutral-500 font-bold mt-1">
-                Structured way to master Data Structures & Algorithms
+                {showBookmarksOnly ? "A collection of your saved questions for later review" : "Structured way to master Data Structures & Algorithms"}
               </p>
             </div>
             <div className="flex gap-2">
@@ -669,9 +752,9 @@ export default function PracticePage() {
 
           <div className="flex flex-wrap gap-4 justify-center">
             {[
-              { label: "Daily Goal", value: "4 / 5 Problems", icon: Zap, color: "text-amber-500 bg-amber-500/10" },
-              { label: "Weekly Goal", value: "18 / 25 Problems", icon: Calendar, color: "text-blue-500 bg-blue-500/10" },
-              { label: "Monthly Goal", value: "72 / 100 Problems", icon: Trophy, color: "text-purple-500 bg-purple-500/10" }
+              { label: "Daily Goal", value: `${backendStats?.dailySolved || 0} / 5 Problems`, icon: Zap, color: "text-amber-500 bg-amber-500/10" },
+              { label: "Weekly Goal", value: `${backendStats?.weeklySolved || 0} / 25 Problems`, icon: Calendar, color: "text-blue-500 bg-blue-500/10" },
+              { label: "Monthly Goal", value: `${backendStats?.monthlySolved || 0} / 100 Problems`, icon: Trophy, color: "text-purple-500 bg-purple-500/10" }
             ].map((goal, idx) => {
               const Icon = goal.icon;
               return (
