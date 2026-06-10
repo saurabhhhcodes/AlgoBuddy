@@ -90,6 +90,13 @@ const LEARNING_TIMELINE = [
   },
 ];
 
+const ACHIEVEMENT_BADGES = [
+  { title: "Module Master", icon: "🏆" },
+  { title: "7-Day Streak", icon: "🔥" },
+  { title: "Community Helper", icon: "🤝" },
+  { title: "Arena Champion", icon: "⚔️" },
+];
+
 function getInitials(name) {
   if (!name) return "??";
   const cleanName = name.includes("@") ? name.split("@")[0] : name;
@@ -811,33 +818,29 @@ export default function ArenaPage() {
 
             {/* Badges Grid */}
             <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Badges</h3>
-                <span
-                  onClick={() => setActiveTab("badges")}
-                  className="text-xs text-primary dark:text-purple-400 font-semibold cursor-pointer hover:underline"
-                >
-                  View All
-                </span>
-              </div>
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
+      Achievement Showcase
+    </h3>
+    <span className="text-xs text-primary">
+      {ACHIEVEMENT_BADGES.length} Earned
+    </span>
+  </div>
 
-              <div className="grid grid-cols-4 gap-2.5">
-                {[
-                  { label: "Binary Search Master", emoji: "🏆", bg: "bg-purple-500/10 border-purple-500/20" },
-                  { label: "Speed Demon", emoji: "⚡", bg: "bg-amber-500/10 border-amber-500/20" },
-                  { label: "Streak God", emoji: "🔥", bg: "bg-red-500/10 border-red-500/20" },
-                  { label: "Consistency King", emoji: "👑", bg: "bg-blue-500/10 border-blue-500/20" }
-                ].map((b, idx) => (
-                  <div
-                    key={idx}
-                    className={`aspect-square rounded-xl flex items-center justify-center text-xl border ${b.bg} shadow-sm`}
-                    title={b.label}
-                  >
-                    {b.emoji}
-                  </div>
-                ))}
-              </div>
-            </div>
+  <div className="grid grid-cols-2 gap-3">
+    {ACHIEVEMENT_BADGES.map((badge, index) => (
+      <div
+        key={index}
+        className="p-3 rounded-xl border border-slate-200 dark:border-neutral-700 text-center"
+      >
+        <div className="text-2xl">{badge.icon}</div>
+        <p className="text-[10px] font-medium mt-1">
+          {badge.title}
+        </p>
+      </div>
+    ))}
+  </div>
+</div>
           </aside>
 
         </div>
