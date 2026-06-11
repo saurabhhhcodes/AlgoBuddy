@@ -31,6 +31,9 @@ const Animation = () => {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
   const [showQuiz, setShowQuiz] = useState(false);
+  const [discussion, setDiscussion] = useState("");
+
+  const elementRefs = useRef([]);
   
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -39,7 +42,6 @@ const Animation = () => {
   const wasPausedRef = useRef(false);
   const stateQueueRef = useRef([]);
   const currentStateIdxRef = useRef(0);
-  const elementRefs = useRef([]);
   
   const [steps, setSteps] = useState([]);
   const [visualState, setVisualState] = useState({
@@ -48,7 +50,8 @@ const Animation = () => {
     violation: false, success: false, done: false
   });
 
-  const onStep = useCallback((state) => {
+  // Define callback handlers BEFORE using them
+  const handleStep = useCallback((state) => {
     setVisualState({
       left: state.left,
       right: state.right,
@@ -62,7 +65,7 @@ const Animation = () => {
     });
   }, []);
 
-  const engine = useAnimationEngine({ steps, onStep, initialSpeed: 1000 });
+  const engine = useAnimationEngine({ steps, onStep: handleStep, initialSpeed: 1000 });
   const currentStepData = steps[engine.currentStep];
 
   const handleReset = useCallback(() => {
@@ -369,6 +372,22 @@ Please explain exactly what is happening in this step in detail.`;
             <button className="px-4 py-2 rounded-lg bg-green-500 text-white">O(n)</button>
             <button className="px-4 py-2 rounded-lg bg-gray-200">O(log n)</button>
           </div>
+        </div>
+      )}
+
+      {showQuiz && (
+        <div className="max-w-4xl mx-auto mb-6 bg-white dark:bg-gray-800 p-5 rounded-xl border">
+          <h3 className="text-lg font-bold mb-3">💬 Community Discussion</h3>
+          <textarea
+            value={discussion}
+            onChange={(e) => setDiscussion(e.target.value)}
+            placeholder="Ask a question or share your explanation..."
+            className="w-full p-3 border rounded-lg"
+            rows={4}
+          />
+          <button className="mt-3 px-4 py-2 bg-purple-600 text-white rounded-lg">
+            Post Discussion
+          </button>
         </div>
       )}
 
