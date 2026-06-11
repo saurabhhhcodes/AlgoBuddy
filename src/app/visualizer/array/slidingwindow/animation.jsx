@@ -88,29 +88,19 @@ const Animation = () => {
     });
   }, [engine]);
 
-  const animateStep = useCallback(() => {
-    if (currentStateIdxRef.current >= stateQueueRef.current.length) {
-      setIsAnimating(false);
-      setMessage("Visualization completed.");
-      setMessageType("success");
-      setShowQuiz(true);
-      return;
-    }
-
-    const state = stateQueueRef.current[currentStateIdxRef.current];
-    const delay = 1500 / 1; // Replace speedRef.current with actual speed value
-
-
+  // Animate the element background and border colors whenever visualState changes
+  useEffect(() => {
     elementRefs.current.forEach((ref, index) => {
       if (!ref) return;
-      const [start, end] = state.activeWindow;
+      const activeWindow = visualState.activeWindow || [-1, -1];
+      const [start, end] = activeWindow;
       
       if (index >= start && index <= end) {
-        if (state.violation && index === state.left) {
+        if (visualState.violation && index === visualState.left) {
           gsap.to(ref, { backgroundColor: "#FEE2E2", borderColor: "#EF4444", color: "#991B1B", duration: 0.2 });
-        } else if (state.success) {
+        } else if (visualState.success) {
           gsap.to(ref, { backgroundColor: "#DCFCE7", borderColor: "#22C55E", color: "#166534", duration: 0.2 });
-        } else if (state.done) {
+        } else if (visualState.done) {
           gsap.to(ref, { backgroundColor: "#F3E8FF", borderColor: "#A855F7", color: "#6B21A8", duration: 0.2 });
         } else {
           gsap.to(ref, { backgroundColor: "#F3E8FF", borderColor: "#A855F7", color: "#6B21A8", duration: 0.2 });
@@ -120,27 +110,12 @@ const Animation = () => {
       }
     });
 
-    if (state.done && engine.isPlaying) {
+    if (visualState.done && engine.isPlaying) {
       setMessage("Visualization completed.");
       setMessageType("success");
       setShowQuiz(true);
     }
   }, [visualState, engine.isPlaying]);
-
-  useEffect(() => {
-    if (steps.length > 0) {
-      stateQueueRef.current = steps;
-      currentStateIdxRef.current = engine.currentStep;
-      wasPausedRef.current = !engine.isPlaying;
-      animationRef.current = requestAnimationFrame(animateStep);
-      
-      return () => {
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current);
-        }
-      };
-    }
-  }, [visualState, steps, engine.currentStep, engine.isPlaying, animateStep]);
 
   useEffect(() => {
     const handleDownload = async () => {
