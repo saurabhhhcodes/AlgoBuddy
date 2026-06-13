@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
 import { Moon, Sun, Menu, X, ChevronDown, Swords, LogOut, Bell } from "lucide-react";
-import { Search, Moon, Sun, Menu, X, ChevronDown, Swords, LogOut } from "lucide-react";
 import { NAV_LINKS } from "./navLinks";
 
 function getStoredTheme() {
