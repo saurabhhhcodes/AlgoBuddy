@@ -11,7 +11,7 @@ import {
 } from "@/lib/userProgress";
 
 export default function ModuleCard({ moduleId, description, initialDone }) {
-  const { user } = useUser();
+  const { user } = useUser() || {};
   const [isDone, setIsDone] = useState(initialDone);
 
   useEffect(() => {
@@ -35,6 +35,7 @@ export default function ModuleCard({ moduleId, description, initialDone }) {
 
       setIsDone(data?.is_done ?? false);
     };
+
 
     fetchUserProgress();
   }, [user, moduleId]);
@@ -71,6 +72,7 @@ export default function ModuleCard({ moduleId, description, initialDone }) {
       return;
     }
 
+<<<<<<< HEAD
     try {
       const nextDone = !isDone;
       const { error, unavailable } = await saveModuleProgress({
@@ -123,3 +125,4 @@ export default function ModuleCard({ moduleId, description, initialDone }) {
     </div>
   );
 }
+
