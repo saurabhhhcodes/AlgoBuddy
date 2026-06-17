@@ -22,7 +22,6 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -35,9 +34,6 @@ public class PracticeService {
     private final UserProgressRepository progressRepository;
     private final UserPracticeStatsRepository statsRepository;
 
-    @Autowired
-    @Lazy
-    private PracticeService self;
 
     @Transactional(readOnly = true)
     public ProgressResponse getUserProgress(UUID userId) {
@@ -77,7 +73,7 @@ public class PracticeService {
         progressRepository.upsertProgress(userId, request.getProblemId(), request.getStatus());
 
         if ("Completed".equals(request.getStatus())) {
-            self.updateStreakWithRetry(userId);
+            updateStreak(userId);
         }
 
         return getUserProgress(userId);
@@ -89,40 +85,52 @@ public class PracticeService {
             return getUserProgress(userId);
         }
 
+        List<BulkProgressRequest.Item> validItems = request.getItems().stream()
+                .filter(item -> item.getProblemId() != null && !item.getProblemId().trim().isEmpty() && item.getStatus() != null)
+                .toList();
+
+        if (validItems.isEmpty()) {
+            return getUserProgress(userId);
+        }
+
+        List<String> problemIds = validItems.stream().map(BulkProgressRequest.Item::getProblemId).toList();
+        List<UserProgress> existingProgress = progressRepository.findByUserIdAndProblemIdIn(userId, problemIds);
+
+        Map<String, UserProgress> existingProgressMap = existingProgress.stream()
+                .collect(Collectors.toMap(UserProgress::getProblemId, p -> p));
+
+        List<UserProgress> toSave = new java.util.ArrayList<>();
         boolean anyCompleted = false;
 
-        for (BulkProgressRequest.Item item : request.getItems()) {
-            if (item.getProblemId() == null || item.getProblemId().trim().isEmpty() || item.getStatus() == null) continue;
-            progressRepository.upsertProgress(userId, item.getProblemId(), item.getStatus());
+        for (BulkProgressRequest.Item item : validItems) {
+            UserProgress progress = existingProgressMap.get(item.getProblemId());
+            if (progress != null) {
+                progress.setStatus(item.getStatus());
+                progress.setUpdatedAt(OffsetDateTime.now());
+            } else {
+                progress = new UserProgress();
+                progress.setUserId(userId);
+                progress.setProblemId(item.getProblemId());
+                progress.setStatus(item.getStatus());
+                progress.setUpdatedAt(OffsetDateTime.now());
+            }
+            toSave.add(progress);
+
             if ("Completed".equals(item.getStatus())) {
                 anyCompleted = true;
             }
         }
 
+        progressRepository.saveAll(toSave);
+
         if (anyCompleted) {
-            self.updateStreakWithRetry(userId);
+            updateStreak(userId);
         }
 
         return getUserProgress(userId);
     }
 
-    public void updateStreakWithRetry(UUID userId) {
-        final int MAX_RETRIES = 3;
-        for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-            try {
-                self.updateStreak(userId);
-                return;
-            } catch (ObjectOptimisticLockingFailureException | DataIntegrityViolationException e) {
-                if (attempt == MAX_RETRIES) {
-                    log.error("Failed to update streak for user {} after {} attempts", userId, MAX_RETRIES, e);
-                    throw e;
-                }
-                log.warn("Lock/constraint failure for user {}, retry attempt {}/{}", userId, attempt, MAX_RETRIES);
-            }
-        }
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void updateStreak(UUID userId) {
         UserPracticeStats stats = statsRepository.findById(userId)
                 .orElse(new UserPracticeStats(userId, 0, 0, null, 0, 0));
