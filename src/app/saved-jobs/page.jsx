@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Briefcase, Bookmark, ChevronLeft, ChevronRight, BookmarkMinus } from "lucide-react";
+import { Briefcase, Bookmark, Download, ChevronLeft, ChevronRight, BookmarkMinus } from "lucide-react";
 
 export default function SavedJobsPage() {
   const [jobs, setJobs] = useState([]);
@@ -11,15 +11,16 @@ export default function SavedJobsPage() {
   const [totalJobs, setTotalJobs] = useState(0);
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   async function fetchBookmarks(page) {
     setLoading(true);
     try {
-      const res = await fetch(`/api/bookmarks?page=${page}&limit=20`);
+      const res = await fetch(`/api/job-bookmarks?page=${page}&limit=20`);
       const data = await res.json();
       setJobs(data.jobs || []);
       setTotalPages(data.totalPages || 0);
-      setTotalJobs((data.jobs || []).length);
+      setTotalJobs(data.totalJobs || 0);
       setCurrentPage(data.currentPage || 1);
     } catch (err) {
       console.error("Failed to fetch bookmarks:", err);
@@ -31,13 +32,14 @@ export default function SavedJobsPage() {
   async function removeBookmark(jobId) {
     setRemoving(jobId);
     try {
-      const res = await fetch("/api/bookmarks", {
+      const res = await fetch("/api/job-bookmarks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jobId }),
       });
       if (res.ok) {
         setJobs((prev) => prev.filter((j) => j.id !== jobId));
+        setTotalJobs((prev) => Math.max(0, prev - 1));
       }
     } catch (err) {
       console.error("Remove bookmark error:", err);
@@ -46,9 +48,24 @@ export default function SavedJobsPage() {
     }
   }
 
-  useEffect(() => {
-    fetchBookmarks(currentPage);
-  }, [currentPage]);
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const res = await fetch("/api/job-bookmarks/export");
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `saved-jobs-export-${Date.now()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export error:", err);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   function handlePrev() {
     if (currentPage > 1) setCurrentPage((p) => p - 1);
@@ -58,12 +75,35 @@ export default function SavedJobsPage() {
     if (currentPage < totalPages) setCurrentPage((p) => p + 1);
   }
 
+  useEffect(() => {
+    fetchBookmarks(currentPage);
+  }, [currentPage]);
+
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center gap-3 mb-8">
-          <Bookmark className="h-6 w-6 text-indigo-600" />
-          <h1 className="text-3xl font-bold text-gray-900">Saved Jobs</h1>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <Bookmark className="h-6 w-6 text-indigo-600" />
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Saved Jobs</h1>
+              <p className="text-gray-600 mt-1">
+                {totalJobs > 0
+                  ? `You have ${totalJobs} saved job${totalJobs !== 1 ? "s" : ""}`
+                  : "Jobs you bookmark will appear here"}
+              </p>
+            </div>
+          </div>
+          {jobs.length > 0 && (
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 disabled:opacity-50 transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              {exporting ? "Exporting..." : "Export CSV"}
+            </button>
+          )}
         </div>
 
         {loading ? (
@@ -108,7 +148,7 @@ export default function SavedJobsPage() {
 
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <Link
-                      href={`/student-jobs`}
+                      href="/student-jobs"
                       className="text-sm font-medium text-indigo-600 hover:text-indigo-800 whitespace-nowrap"
                     >
                       View
