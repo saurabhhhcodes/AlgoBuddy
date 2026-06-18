@@ -325,18 +325,6 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   const isWeighted = weightedAlgorithms.has(algorithm);
   const isDirected = directedAlgorithms.has(algorithm);
 
-  // Handle edge weight updates from GraphCanvas
-  const handleUpdateEdgeWeight = useCallback((edgeIdx, newWeight) => {
-    setEdges((prev) =>
-      prev.map((e, i) => (i === edgeIdx ? { ...e, weight: newWeight } : e))
-    );
-  }, []);
-
-  // When adding an edge, default weight = 1
-  const handleAddEdge = useCallback((edge) => {
-    setEdges((prev) => [...prev, { ...edge, weight: 1, directed: isDirected }]);
-  }, [isDirected]);
-
   const frames = useMemo(() => {
     const adj = {};
     nodes.forEach(n => adj[n.id] = []);
