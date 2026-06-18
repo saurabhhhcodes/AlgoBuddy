@@ -28,15 +28,6 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
-const Editor = dynamic(() => import("@monaco-editor/react"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-[340px] items-center justify-center bg-neutral-50 dark:bg-neutral-950 text-sm font-semibold text-neutral-400">
-      Loading Editor...
-    </div>
-  ),
-});
-
 const SAMPLES = {
   JavaScript: `// JavaScript: Calculate the sum of an array
 function findSum(arr) {
