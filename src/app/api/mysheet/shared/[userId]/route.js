@@ -1,9 +1,26 @@
+import { getAuthenticatedUser } from "@/lib/auth";
+import {
+  canViewPrivateSheetNotes,
+  mapSharedSheetItems,
+} from "@/lib/mysheetSharing";
 import { getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
 
 export async function GET(request, { params }) {
   try {
     const { userId } = await params;
     if (!userId) return jsonResponse({ error: "userId is required" }, 400);
+
+    const authResult = await getAuthenticatedUser();
+    if (!authResult.success) {
+      if (authResult.type === "CONFIG_ERROR") {
+        return jsonResponse({ error: "Auth server is not configured." }, 500);
+      }
+      if (authResult.type === "AUTH_PROVIDER_ERROR") {
+        return jsonResponse({ error: "Authentication provider error" }, 500);
+      }
+    }
+
+    const includePrivateNotes = canViewPrivateSheetNotes(authResult, userId);
 
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
@@ -13,13 +30,9 @@ export async function GET(request, { params }) {
 
     if (error) return jsonResponse({ error: error.message }, 500);
 
-    const items = (data || []).map((row) => ({
-      problemId: row.problem_id,
-      addedAt: row.added_at,
-      note: row.note || "",
-    }));
-
-    return jsonResponse({ items });
+    return jsonResponse({
+      items: mapSharedSheetItems(data, { includePrivateNotes }),
+    });
   } catch (error) {
     return errorResponse(error);
   }

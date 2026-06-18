@@ -43,7 +43,7 @@ export async function POST(request, { params }) {
       .map(item => ({
         user_id: authResult.user.id,
         problem_id: item.problem_id,
-        note: item.note || "",
+        note: "",
         added_at: new Date().toISOString()
       }));
 
