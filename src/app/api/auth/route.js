@@ -71,13 +71,7 @@ let memorySweepTimer = null;
 function startMemorySweeper() {
   if (memorySweepTimer) return;
   memorySweepTimer = setInterval(() => {
-    const now = Date.now();
-    for (const [k, until] of memoryLockouts.entries()) {
-      if (until <= now) memoryLockouts.delete(k);
-    }
-    for (const [k, bucket] of memoryFailures.entries()) {
-      if (bucket.resetAt <= now) memoryFailures.delete(k);
-    }
+    cleanupMemoryAuthState();
   }, MEMORY_SWEEP_INTERVAL_MS);
   if (memorySweepTimer.unref) memorySweepTimer.unref();
 }
@@ -219,17 +213,25 @@ async function recordLoginFailure(email) {
 
   const now = Date.now();
   const bucket = memoryFailures.get(email);
+  const maxFailures = getBoundedMax(MAX_MEMORY_FAILURE_ENTRIES, 5000);
+  const maxLockouts = getBoundedMax(MAX_MEMORY_LOCKOUT_ENTRIES, 5000);
   if (!bucket || bucket.resetAt <= now) {
-    memoryFailures.set(email, { count: 1, resetAt: now + LOGIN_FAILURE_WINDOW_SECONDS * 1000 });
+    setMemoryEntry(
+      memoryFailures,
+      email,
+      { count: 1, resetAt: now + LOGIN_FAILURE_WINDOW_SECONDS * 1000 },
+      maxFailures,
+    );
     return { locked: false, remaining: LOGIN_FAILURE_THRESHOLD - 1 };
   }
   bucket.count += 1;
   const remaining = Math.max(0, LOGIN_FAILURE_THRESHOLD - bucket.count);
   if (bucket.count >= LOGIN_FAILURE_THRESHOLD) {
     memoryFailures.delete(email);
-    memoryLockouts.set(email, now + LOGIN_LOCK_SECONDS * 1000);
+    setMemoryEntry(memoryLockouts, email, now + LOGIN_LOCK_SECONDS * 1000, maxLockouts);
     return { locked: true, remaining: 0 };
   }
+  setMemoryEntry(memoryFailures, email, bucket, maxFailures);
   return { locked: false, remaining };
 }
 
