@@ -180,20 +180,27 @@ export default function ArenaPage() {
   // Modals state
   const [matchmakingOpen, setMatchmakingOpen] = useState(false);
   const [createDuelOpen, setCreateDuelOpen] = useState(false);
+  const [duelSimulatorOpen, setDuelSimulatorOpen] = useState(false);
+  const [selectedOpponent, setSelectedOpponent] = useState(null);
+  const [activeDuelProblem, setActiveDuelProblem] = useState("Reverse Linked List");
+  const [showXPWidget, setShowXPWidget] = useState(true);
 
   // Fix for browser back button from Matchmaking modal (Issue #1333)
   // Fix for browser back button from Create Duel modal (Issue #1336)
+  // Fix for browser back button from Duel Simulator modal (Issue #1415)
   useEffect(() => {
     const handlePopState = (e) => {
       if (matchmakingOpen) {
         setMatchmakingOpen(false);
       } else if (createDuelOpen) {
         setCreateDuelOpen(false);
+      } else if (duelSimulatorOpen) {
+        setDuelSimulatorOpen(false);
       }
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [matchmakingOpen, createDuelOpen]);
+  }, [matchmakingOpen, createDuelOpen, duelSimulatorOpen]);
 
   const openMatchmakingModal = () => {
     if (!ensureLoggedIn()) return;
@@ -220,10 +227,20 @@ export default function ArenaPage() {
       window.history.back();
     }
   };
-  const [duelSimulatorOpen, setDuelSimulatorOpen] = useState(false);
-  const [selectedOpponent, setSelectedOpponent] = useState(null);
-  const [activeDuelProblem, setActiveDuelProblem] = useState("Reverse Linked List");
-  const [showXPWidget, setShowXPWidget] = useState(true);
+
+  const openDuelSimulator = (opponent, topic) => {
+    setSelectedOpponent(opponent);
+    setActiveDuelProblem(topic);
+    window.history.pushState({ modal: "duelSimulator" }, "", window.location.href);
+    setDuelSimulatorOpen(true);
+  };
+
+  const closeDuelSimulator = () => {
+    setDuelSimulatorOpen(false);
+    if (window.history.state?.modal === "duelSimulator") {
+      window.history.back();
+    }
+  };
 
    useEffect(() => {
   if (typeof window !== "undefined") {
@@ -256,23 +273,23 @@ export default function ArenaPage() {
   }, [user, loading, profile]);
 
   const handleMatchFound = (opponent) => {
-    setSelectedOpponent(opponent);
     closeMatchmakingModal();
-    setActiveDuelProblem("Two Sum");
-    setDuelSimulatorOpen(true);
+    setTimeout(() => {
+      openDuelSimulator(opponent, "Two Sum");
+    }, 100);
   };
-
+ 
   const handleWatchLive = (p1, p2, topic) => {
-    setSelectedOpponent({ name: p2, rating: 2100, level: 15, avatar: p2.slice(0, 2).toUpperCase() });
-    setActiveDuelProblem(topic);
-    setDuelSimulatorOpen(true);
+    const opponent = { name: p2, rating: 2100, level: 15, avatar: p2.slice(0, 2).toUpperCase() };
+    openDuelSimulator(opponent, topic);
   };
-
+ 
   const handleCreateMatchLaunch = (matchConfig) => {
-    setCreateDuelOpen(false);
-    setSelectedOpponent({ name: "Opponent", rating: 1600, level: 15, avatar: "OP" });
-    setActiveDuelProblem(matchConfig.topic);
-    setDuelSimulatorOpen(true);
+    closeCreateDuelModal();
+    setTimeout(() => {
+      const opponent = { name: "Opponent", rating: 1600, level: 15, avatar: "OP" };
+      openDuelSimulator(opponent, matchConfig.topic);
+    }, 100);
   };
 
   if (loading) {
@@ -908,7 +925,7 @@ export default function ArenaPage() {
 
       <DuelSimulatorModal
         isOpen={duelSimulatorOpen}
-        onClose={() => setDuelSimulatorOpen(false)}
+        onClose={closeDuelSimulator}
         opponent={selectedOpponent}
         currentUserStats={currentUserStats}
         problemName={activeDuelProblem}
