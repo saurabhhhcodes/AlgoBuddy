@@ -1,11 +1,25 @@
 "use client";
+import { Bookmark } from "lucide-react";
 import { useBookmark } from "@/app/hooks/useBookmark";
 import Link from "next/link";
+import EmptyState from "@/app/components/ui/EmptyState";
 
 export default function BookmarkSection() {
   const { bookmarks, removeBookmark, clearBookmarks } = useBookmark();
 
-  if (bookmarks.length === 0) return null;
+  if (bookmarks.length === 0) {
+    return (
+      <div className="mb-8 px-4">
+        <EmptyState
+          icon={Bookmark}
+          title="No bookmarks yet"
+          message="Start exploring visualizers and resources to build your collection."
+          actionLabel="Explore Visualizers"
+          actionHref="/visualizer"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="mb-8 px-4">

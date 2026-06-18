@@ -13,6 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 
+import EmptyState from "@/app/components/ui/EmptyState";
 import { useUser } from "@/features/user/UserContext";
 import { useBookmark } from "@/app/hooks/useBookmark";
 import { useProblemBookmarks } from "@/app/hooks/useProblemBookmarks";
@@ -281,10 +282,13 @@ export default function DashboardClient() {
           </div>
 
           {resourceBookmarks.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-sm text-slate-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
-              No saved visualizers yet. Open the Visualizer and bookmark a page
-              to start building your library.
-            </div>
+            <EmptyState
+              icon={Bookmark}
+              title="No saved pages yet"
+              message="Open the Visualizer and bookmark a page to start building your library."
+              actionLabel="Open Visualizer"
+              actionHref="/visualizer"
+            />
           ) : (
             <div className="space-y-6">
               {groupedResourceBookmarks.map((group) => (
@@ -358,10 +362,13 @@ export default function DashboardClient() {
               Loading practice bookmarks...
             </div>
           ) : problemBookmarks.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-sm text-slate-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
-              No practice bookmarks yet. Open Practice, save a few problems, and
-              they will appear here.
-            </div>
+            <EmptyState
+              icon={Layers3}
+              title="No practice bookmarks yet"
+              message="Open Practice, save a few problems, and they will appear here."
+              actionLabel="Open Practice"
+              actionHref="/practice"
+            />
           ) : (
             <div className="space-y-6">
               {groupedProblemBookmarks.map((group) => (

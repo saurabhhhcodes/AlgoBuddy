@@ -22,6 +22,7 @@ import PracticeRightSidebar from "@/app/components/practice/PracticeRightSidebar
 import PracticeSessionBanner from "@/app/components/practice/PracticeSessionBanner";
 import CompanyLogos from "@/app/components/practice/CompanyLogos";
 import TheoryDrawer from "@/app/components/practice/TheoryDrawer";
+import EmptyState from "@/app/components/ui/EmptyState";
 import BackToTop from "@/app/components/ui/backtotop";
 import Footer from "@/app/components/footer";
 
@@ -601,6 +602,24 @@ export default function PracticePage() {
               {/* Tab contents */}
               {activeTab === "problems" && (
                 <div className="space-y-6">
+                  {(activeView === "bookmarks" && filteredProblems.length === 0) ? (
+                    <EmptyState
+                      icon={Bookmark}
+                      title="No bookmarks yet"
+                      message="Save problems from the Problem List to quickly access them here."
+                      actionLabel="Browse Problems"
+                      actionOnClick={() => setActiveView("problem-list")}
+                    />
+                  ) : (activeView === "recent-solved" && filteredProblems.length === 0) ? (
+                    <EmptyState
+                      icon={CheckCircle2}
+                      title="No solved problems yet"
+                      message="Start solving problems and your completed ones will show up here."
+                      actionLabel="Explore Problems"
+                      actionHref="/practice"
+                    />
+                  ) : (
+                  <>
                   {/* Search and Filters Row */}
                   <div className="flex flex-col sm:flex-row items-center gap-3.5">
                     {/* Search */}
@@ -841,6 +860,8 @@ export default function PracticePage() {
                       )}
                     </div>
                   </div>
+                  </>
+                )}
                 </div>
               )}
 
