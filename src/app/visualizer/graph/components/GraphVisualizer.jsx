@@ -620,9 +620,9 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
               <BarChart3 className="h-5 w-5" />
               <h3 className="font-bold">Complexity Analysis</h3>
             </div>
-            <div className="h-48 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={complexityData[algorithm]} layout="vertical" margin={{ left: -20, right: 20 }}>
+            <div className="h-48 w-full overflow-x-auto">
+              <ResponsiveContainer width="100%" height="100%" minWidth={280}>
+                <BarChart data={complexityData[algorithm]} layout="vertical" margin={{ left: 0, right: 20 }}>
                   <XAxis type="number" hide domain={[0, 100]} />
                   <YAxis dataKey="name" type="category" stroke="currentColor" className="text-[10px] text-surface-500" />
                   <Tooltip 
@@ -662,7 +662,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
           {/* Algorithm Comparison */}
           <div className="rounded-2xl border border-surface-200 bg-white p-5 shadow-sm dark:border-surface-800 dark:bg-surface-900">
             <h3 className="mb-4 text-sm font-bold text-surface-900 dark:text-white">Algorithm Comparison</h3>
-            <div className="h-40 w-full">
+            <div className="h-40 w-full overflow-x-auto">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={comparisonData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-surface-200)" />
