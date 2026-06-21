@@ -67,13 +67,27 @@ export default function useVisualizerKeyboard({
           }
           break;
 
+        case "n":
+        case "N":
+          onNextStep?.();
+          break;
+
+        case "p":
+        case "P":
+          onPrevStep?.();
+          break;
+
         case "+":
         case "=":
-          onSpeedChange?.(Math.min(parseFloat((speed + 0.5).toFixed(1)), 5));
+          onSpeedChange?.(
+            Math.min(parseFloat((speed + 0.5).toFixed(1)), 5)
+          );
           break;
 
         case "-":
-          onSpeedChange?.(Math.max(parseFloat((speed - 0.5).toFixed(1)), 0.5));
+          onSpeedChange?.(
+            Math.max(parseFloat((speed - 0.5).toFixed(1)), 0.5)
+          );
           break;
 
         default:
