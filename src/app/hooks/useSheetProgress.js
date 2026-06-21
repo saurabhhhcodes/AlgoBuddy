@@ -264,10 +264,10 @@ export function useSheetProgress() {
         writeLocal(authoritative);
         if (!cancelled) setProgress(authoritative);
 
-        // 5. Update streak state
+        // 5. Update streak state — server is authoritative for authenticated users.
         if (!cancelled) {
-          if (isUsingSpringBoot() && serverData.currentStreak !== undefined) {
-            // Spring Boot streak is authoritative
+          if (serverData.currentStreak !== undefined) {
+            // Both Spring Boot and Supabase paths now return currentStreak.
             setStreakData({
               current: serverData.currentStreak || 0,
               best: serverData.longestStreak || 0,
@@ -276,6 +276,8 @@ export function useSheetProgress() {
               monthlySolved: serverData.monthlySolved || 0,
             });
           } else {
+            // Server did not return streak fields — fall back to localStorage
+            // only as a last resort (e.g. unexpected API shape change).
             const localStreak = readLocalStreak();
             setStreakData((prev) => ({ ...prev, ...localStreak }));
           }
@@ -305,8 +307,10 @@ export function useSheetProgress() {
       setProgress(updated);
       writeLocal(updated);
 
-      // Update local streak on completion
-      if (newStatus === "Completed") {
+      // Update local streak on completion only for guests.
+      // Authenticated users get their streak from the server after the sync
+      // below, so updating localStorage here would cause divergence.
+      if (newStatus === "Completed" && !user) {
         const next = updateLocalStreak(streakData.current);
         setStreakData((prev) => ({
           ...prev,
@@ -319,8 +323,9 @@ export function useSheetProgress() {
       if (user) {
         try {
           const fresh = await postProgressToServer(problemId, newStatus);
-          // After Spring Boot update, use the returned fresh streak data
-          if (isUsingSpringBoot() && fresh) {
+          // Use server streak data whenever it is returned (both Spring Boot
+          // and Supabase paths now include currentStreak/longestStreak).
+          if (fresh && fresh.currentStreak !== undefined) {
             setStreakData({
               current: fresh.currentStreak || 0,
               best: fresh.longestStreak || 0,
