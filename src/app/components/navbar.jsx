@@ -16,12 +16,13 @@ import {
   LogOut,
   Bell,
   User,
-  LayoutDashboard,
 } from "lucide-react";
 
 import { NAV_LINKS } from "./navLinks";
 import NotificationDropdown from "./notifications/NotificationDropdown";
 import ProfileProgress from "./ui/ProfileProgress";
+
+const MAX_AVATAR_URL_LENGTH = 512;
 
 function getStoredTheme() {
   if (typeof window === "undefined") return "light";
@@ -52,6 +53,12 @@ function getInitials(name) {
   return parts[0].slice(0, 2).toUpperCase();
 }
 
+function safeAvatarUrl(value) {
+  if (typeof value !== "string") return "";
+  if (value.startsWith("data:")) return "";
+  if (value.length > MAX_AVATAR_URL_LENGTH) return "";
+  return value;
+}
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -64,6 +71,9 @@ export default function Navbar() {
  
   const { user, setUser } = useUser();
   const userRef = useRef(null);
+  const avatarSrc = safeAvatarUrl(
+    user?.user_metadata?.avatar_url || user?.user_metadata?.picture
+  );
 
   useEffect(() => {
     const currentTheme = getStoredTheme();
@@ -247,9 +257,9 @@ export default function Navbar() {
                   }
                   className="flex items-center gap-2 rounded-full px-3 py-1.5 border border-surface-200 dark:border-surface-700 hover:border-primary transition-colors focus-ring"
                 >
-                  {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                  {avatarSrc ? (
                     <Image
-                      src={user.user_metadata.avatar_url || user.user_metadata.picture}
+                      src={avatarSrc}
                       alt="avatar"
                       width={28}
                       height={28}
@@ -268,9 +278,9 @@ export default function Navbar() {
                 {userMenuOpen && (
                   <div className="absolute right-0 top-[calc(100%+8px)] w-64 bg-white/95 dark:bg-udemy-dark-surface/95 backdrop-blur-md border border-surface-200/80 dark:border-surface-700/80 shadow-elevated rounded-2xl z-[9999] overflow-hidden transition-all duration-200 ease-out origin-top-right">
                     <div className="px-4 py-3.5 border-b border-surface-100 dark:border-udemy-dark-border bg-surface-50/50 dark:bg-neutral-900/30 flex items-center gap-3">
-                      {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                      {avatarSrc ? (
                         <Image
-                          src={user.user_metadata.avatar_url || user.user_metadata.picture}
+                          src={avatarSrc}
                           alt="avatar"
                           width={36}
                           height={36}
@@ -295,17 +305,6 @@ export default function Navbar() {
                     <ProfileProgress compact={true} />
 
                     <div className="py-1.5 px-1.5 flex flex-col gap-0.5">
-                      <Link
-                        href="/dashboard"
-                        onClick={() =>
-                          setUserMenuOpen(false)
-                        }
-                        className="group flex items-center gap-3 px-3 py-2 text-[14px] font-medium text-surface-700 dark:text-[#f5f5f5] rounded-lg hover:text-primary dark:hover:text-primary-light hover:bg-primary/5 dark:hover:bg-primary/10 transition-all duration-150 focus-ring"
-                      >
-                        <LayoutDashboard className="w-4 h-4 text-surface-400 group-hover:text-primary dark:group-hover:text-primary-light group-hover:scale-105 transition-all duration-150" />
-                        Dashboard
-                      </Link>
-
                       <Link
                         href="/profile"
                         onClick={() =>
@@ -470,16 +469,6 @@ export default function Navbar() {
                 <p className="text-[13px] text-surface-500 dark:text-[#737373] truncate pb-1">
                   {user.email}
                 </p>
-
-                <Link
-                  href="/dashboard"
-                  onClick={() =>
-                    setMenuOpen(false)
-                  }
-                  className="h-[44px] flex items-center justify-center text-[15px] font-semibold border border-surface-300 dark:border-udemy-dark-border rounded-full text-surface-900 dark:text-white hover:border-primary hover:text-primary transition-all focus-ring"
-                >
-                  Dashboard
-                </Link>
 
                 <Link
                   href="/profile"

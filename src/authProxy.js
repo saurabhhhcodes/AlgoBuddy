@@ -37,7 +37,7 @@ function getSupabaseConfig() {
   return { supabaseUrl, supabaseAnonKey };
 }
 
-const protectedRoutes = ["/arena", "/practice", "/dashboard", "/profile"];
+const protectedRoutes = ["/arena", "/practice", "/profile"];
 
 export async function proxy(request) {
   let supabaseResponse = NextResponse.next({ request });

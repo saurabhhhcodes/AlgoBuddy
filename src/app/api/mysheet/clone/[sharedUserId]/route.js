@@ -1,5 +1,5 @@
 import { getAuthenticatedUser } from "@/lib/auth";
-import { getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { getSupabaseRequestClient, jsonResponse, errorResponse } from "@/lib/serverApi";
 
 export async function POST(request, { params }) {
   try {
