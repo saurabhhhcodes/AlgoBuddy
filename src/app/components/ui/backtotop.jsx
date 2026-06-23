@@ -25,6 +25,7 @@ const BackToTop = () => {
       onClick={scrollToTop}
       aria-label="Back to top"
       className={`
+        hide-on-mobile-menu
         fixed bottom-20 right-3 sm:bottom-28 sm:right-7 z-50
         w-10 h-10 sm:w-12 sm:h-12 rounded-full
         bg-[#a435f0]

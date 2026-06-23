@@ -102,7 +102,7 @@ const ContactSupportPopup = () => {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-8 font-semibold z-40 bg-udemy-purple hover:bg-udemy-purple-dark text-white px-6 py-3 rounded shadow-xl hover:shadow-2xl transition-all flex items-center gap-2"
+        className="hide-on-mobile-menu fixed bottom-8 font-semibold z-40 bg-udemy-purple hover:bg-udemy-purple-dark text-white px-6 py-3 rounded shadow-xl hover:shadow-2xl transition-all flex items-center gap-2"
       >
         <FiMail size={18} />
         <span>Contact Us</span>
