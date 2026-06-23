@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
-import { Search, Moon, Sun, Menu, X, ChevronDown, Swords, LogOut } from "lucide-react";
+import { Search, Moon, Sun, Menu, X, ChevronDown, Swords, LogOut, Keyboard } from "lucide-react";
 import { NAV_LINKS } from "./navLinks";
 
 function getStoredTheme() {
@@ -216,6 +216,15 @@ export default function Navbar() {
               </kbd>
             </button>
 
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("open-shortcuts-help"))}
+              className="w-9 h-9 flex items-center justify-center rounded-full border border-surface-200 dark:border-surface-700 text-surface-500 dark:text-surface-400 hover:border-primary hover:text-primary transition-colors focus-ring"
+              aria-label="Open keyboard shortcuts"
+              title="Keyboard shortcuts"
+            >
+              <Keyboard className="w-4 h-4" />
+            </button>
+
             {user ? (
               <div
                 ref={userRef}
@@ -314,6 +323,13 @@ export default function Navbar() {
               className="w-10 h-10 flex items-center justify-center text-surface-600 dark:text-surface-400 rounded-lg hover:bg-surface-100 dark:hover:bg-udemy-dark-surface transition-colors focus-ring"
             >
               <Search className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("open-shortcuts-help"))}
+              aria-label="Open keyboard shortcuts"
+              className="w-10 h-10 flex items-center justify-center text-surface-600 dark:text-surface-400 rounded-lg hover:bg-surface-100 dark:hover:bg-udemy-dark-surface transition-colors focus-ring"
+            >
+              <Keyboard className="w-5 h-5" />
             </button>
             <button
               onClick={() =>
