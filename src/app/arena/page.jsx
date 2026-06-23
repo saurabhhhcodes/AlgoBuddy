@@ -8,6 +8,7 @@ import { toast } from "react-hot-toast";
 import UpcomingTournament from "@/app/components/ui/UpcomingTournament";
 import MatchmakingModal from "@/app/components/ui/MatchmakingModal";
 import DuelSimulatorModal from "@/app/components/ui/DuelSimulatorModal";
+import SpectatorSimulatorModal from "@/app/components/ui/SpectatorSimulatorModal";
 import CreateDuelModal from "@/app/components/ui/CreateDuelModal";
 import BackToTop from "@/app/components/ui/backtotop";
 import Footer from "@/app/components/footer";
@@ -986,7 +987,17 @@ export default function ArenaPage() {
       <CreateDuelModal
         isOpen={createDuelOpen}
         onClose={closeCreateDuelModal}
-        onCreateMatch={handleCreateMatchLaunch}
+        onLaunch={handleCreateMatchLaunch}
+        currentUserStats={currentUserStats}
+      />
+
+      <SpectatorSimulatorModal
+        isOpen={spectatorModalOpen}
+        onClose={() => {
+          setSpectatorModalOpen(false);
+          setSpectatingMatch(null);
+        }}
+        matchData={spectatingMatch}
       />
     </section>
   );
