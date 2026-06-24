@@ -32,7 +32,14 @@ function isAllowedVercelOrigin(origin) {
 function isOriginAllowed(origin, callback) {
   // Allow requests with no origin (Render health checks, server-to-server)
   if (!origin) return callback(null, true);
-  if (ALLOWED_ORIGINS.includes(origin) || isAllowedVercelOrigin(origin)) {
+  
+  if (
+    ALLOWED_ORIGINS.includes(origin) || 
+    isAllowedVercelOrigin(origin) ||
+    origin.startsWith("http://localhost:") ||
+    origin.startsWith("http://127.0.0.1:") ||
+    origin.startsWith("http://192.168.")
+  ) {
     callback(null, true);
   } else {
     callback(new Error("Not allowed by CORS"));
@@ -377,15 +384,22 @@ io.on("connection", async (socket) => {
   // Verify Supabase JWT from handshake auth using JWKS
   const token = socket.handshake.auth?.token;
   const authPayload = await verifyAuthToken(token);
+  
   if (!authPayload) {
-    socket.emit("error", { message: "Authentication required. Please sign in again." });
-    socket.disconnect(true);
-    return;
+    const queryUserId = socket.handshake.query?.userId;
+    if (queryUserId && queryUserId.startsWith("spectator_")) {
+      socket.data.userId = queryUserId;
+      console.log(`Spectator connected: ${socket.id}, userId: ${socket.data.userId}`);
+    } else {
+      socket.emit("error", { message: "Authentication required. Please sign in again." });
+      socket.disconnect(true);
+      return;
+    }
+  } else {
+    // Store verified userId from the JWT payload
+    socket.data.userId = authPayload.sub || authPayload.id;
+    console.log(`Authenticated user connected: ${socket.id}, userId: ${socket.data.userId}`);
   }
-
-  // Store verified userId from the JWT payload — never trust client-supplied userId
-  socket.data.userId = authPayload.sub || authPayload.id;
-  console.log(`Authenticated user connected: ${socket.id}, userId: ${socket.data.userId}`);
 
   socket.on("join_matchmaking", async (data) => {
     try {
@@ -510,8 +524,25 @@ io.on("connection", async (socket) => {
       
       socket.join(data.matchId);
       await redisClient.hset(`{arena}:socket:${socket.id}`, "matchId", data.matchId);
+      console.log(`Player ${socket.data.userId} re-joined match ${data.matchId}`);
     } catch (error) {
       console.error(`[join_match] Error for user ${socket.data.userId}:`, error);
+    }
+  });
+
+  socket.on("join_spectator", async (data) => {
+    try {
+      if (!data.matchId) return;
+      const matchStr = await redisClient.get(`{arena}:match:${data.matchId}`);
+      if (!matchStr) return;
+      
+      // Spectator simply joins the socket.io room to receive broadcasts.
+      socket.join(data.matchId);
+      // We explicitly DO NOT set {arena}:socket:${socket.id} -> matchId in Redis, 
+      // preventing the spectator from emitting events.
+      console.log(`Spectator ${socket.data.userId} joined match ${data.matchId}`);
+    } catch (error) {
+      console.error(`[join_spectator] Error for user ${socket.data.userId}:`, error);
     }
   });
 
@@ -520,8 +551,12 @@ io.on("connection", async (socket) => {
     try {
       if (await isRateLimited(socket.data.userId)) return;
       const matchId = await redisClient.hget(`{arena}:socket:${socket.id}`, "matchId");
-      if (!matchId || matchId !== data.matchId) return;
+      if (!matchId || matchId !== data.matchId) {
+        console.log(`Player ${socket.data.userId} failed typing_status because matchId doesn't match: expected ${data.matchId}, got ${matchId}`);
+        return;
+      }
 
+      console.log(`Player ${socket.data.userId} emitted typing_status to room ${data.matchId}`);
       socket.to(data.matchId).emit("opponent_typing_status", {
         isTyping: data.isTyping,
         userId: socket.data.userId
@@ -736,6 +771,37 @@ app.get("/debug", async (req, res) => {
 
 app.get("/health", (req, res) => {
   res.json({ status: "Arena Socket Server is running with Redis!" });
+});
+
+async function scanRedisKeys(pattern) {
+  let keys = [];
+  let cursor = '0';
+  do {
+    const result = await redisClient.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+    cursor = result[0];
+    keys.push(...result[1]);
+  } while (cursor !== '0');
+  return keys;
+}
+
+app.get("/api/matches/active", async (req, res) => {
+  try {
+    const matchKeys = await scanRedisKeys("{arena}:match:*");
+    const activeMatches = [];
+    for (const key of matchKeys) {
+      if (key.endsWith(":completed")) continue;
+      const matchStr = await redisClient.get(key);
+      if (matchStr) {
+        const match = JSON.parse(matchStr);
+        if (match.status === "in-progress") {
+          activeMatches.push(match);
+        }
+      }
+    }
+    res.json({ matches: activeMatches });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 server.listen(PORT, () => {
