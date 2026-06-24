@@ -9,6 +9,7 @@ import com.algobuddy.backend.repository.UserPracticeStatsRepository;
 import com.algobuddy.backend.repository.UserProgressRepository;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +34,7 @@ public class PracticeService {
 
 
     @Transactional(readOnly = true)
-    public ProgressResponse getUserProgress(UUID userId) {
+    public ProgressResponse getUserProgress(@NonNull UUID userId) {
         List<UserProgress> progressList = progressRepository.findByUserId(userId);
         
         Map<String, ProgressResponse.ProgressDetail> progressMap = progressList.stream()
@@ -66,7 +67,7 @@ public class PracticeService {
     }
 
     @Transactional
-    public ProgressResponse updateProgress(UUID userId, ProgressRequest request) {
+    public ProgressResponse updateProgress(@NonNull UUID userId, ProgressRequest request) {
         progressRepository.upsertProgress(userId, request.getProblemId(), request.getStatus());
 
         if ("Completed".equals(request.getStatus())) {
@@ -77,7 +78,7 @@ public class PracticeService {
     }
 
     @Transactional
-    public ProgressResponse bulkUpdateProgress(UUID userId, BulkProgressRequest request) {
+    public ProgressResponse bulkUpdateProgress(@NonNull UUID userId, BulkProgressRequest request) {
         if (request.getItems() == null || request.getItems().isEmpty()) {
             return getUserProgress(userId);
         }
@@ -127,28 +128,8 @@ public class PracticeService {
         return getUserProgress(userId);
     }
 
-    public void updateStreakWithRetry(UUID userId) {
-        final int MAX_RETRIES = 3;
-        for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-            try {
-                self.updateStreak(userId);
-                return;
-            } catch (ObjectOptimisticLockingFailureException e) {
-                if (attempt == MAX_RETRIES) {
-                    log.error("Failed to update streak for user {} after {} attempts", userId, MAX_RETRIES, e);
-                    throw e;
-                }
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void updateStreak(UUID userId) {
+    @Transactional
+    public void updateStreak(@NonNull UUID userId) {
         statsRepository.acquireStreakUpdateLock(userId);
         statsRepository.upsertStreakAtomic(userId, LocalDate.now());
     }

@@ -378,7 +378,7 @@ npm install
 
 ### 3️⃣ Configure Database Schema
 
-Run the following SQL in the Supabase SQL Editor to enable user progress tracking:
+Run the following SQL in the Supabase SQL Editor to enable user progress tracking and avatar storage:
 
 ```sql
 create extension if not exists "pgcrypto";
@@ -415,15 +415,47 @@ create policy "Users can update own progress"
 on public.user_progress
 for update
 using (auth.uid() = user_id);
+
+
+-- Avatar / profile table
+create table if not exists public.user_profiles (
+  id uuid primary key default gen_random_uuid(),
+
+  user_id uuid not null references auth.users(id) on delete cascade unique,
+
+  avatar_url text,
+
+  created_at timestamptz default now(),
+
+  updated_at timestamptz default now()
+);
+
+alter table public.user_profiles enable row level security;
+
+create policy "Users can read own profile"
+on public.user_profiles
+for select
+using (auth.uid() = user_id);
+
+create policy "Users can insert own profile"
+on public.user_profiles
+for insert
+with check (auth.uid() = user_id);
+
+create policy "Users can update own profile"
+on public.user_profiles
+for update
+using (auth.uid() = user_id);
 ```
 
-This table is required for:
+These tables are required for:
 
 * Module completion tracking
-* Dashboard progress updates
+* Profile progress updates
+* Avatar profile data
 * Learning streak features
 
-> ⚠️ Without this table, progress tracking and streak features will not work locally.
+> Note: Without these tables, progress tracking, avatars, and streak features will not work locally.
 
 ### 4️⃣ Configure Environment Variables
 
