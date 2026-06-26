@@ -1,5 +1,4 @@
 import Footer from "@/app/components/footer";
-import BackToTop from "@/app/components/ui/backtotop";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
 
 export function createVisualizerPaths(...segments) {
@@ -104,7 +103,6 @@ export default function VisualizerPageLayout({
         </VisualizerPageSection>
       </div>
 
-      <BackToTop />
       <Footer />
     </>
   );
