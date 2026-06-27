@@ -242,8 +242,16 @@ async function backfillMemorySessionsToRedis() {
           memorySessions.delete(id);
           memorySessionTtls.delete(id);
         } else {
-          memorySessions.delete(id);
-          memorySessionTtls.delete(id);
+          const existingSession = JSON.parse(existing);
+          if (new Date(existingSession.updatedAt) >= new Date(session.updatedAt)) {
+            memorySessions.delete(id);
+            memorySessionTtls.delete(id);
+          } else {
+            await redis.set(sessionKey(id), session, { ex: SESSION_TTL_SECONDS });
+            migrated++;
+            memorySessions.delete(id);
+            memorySessionTtls.delete(id);
+          }
         }
       }
       await new Promise(resolve => setImmediate(resolve));
@@ -276,7 +284,10 @@ function startReconciliationTimer() {
   if (reconciliationTimer) return;
   reconciliationTimer = setInterval(async () => {
     if (memorySessions.size > 0 && shouldTryRedis()) {
-      await backfillMemorySessionsToRedis();
+      const count = await backfillMemorySessionsToRedis();
+      if (memorySessions.size === 0) {
+        stopReconciliationTimer();
+      }
     }
     // Log warning if memory session count exceeds threshold
     if (memorySessions.size > MEMORY_WRITE_WARN_THRESHOLD) {
@@ -288,6 +299,13 @@ function startReconciliationTimer() {
     }
   }, RECONCILIATION_INTERVAL_MS);
   if (reconciliationTimer.unref) reconciliationTimer.unref();
+}
+
+function stopReconciliationTimer() {
+  if (reconciliationTimer) {
+    clearInterval(reconciliationTimer);
+    reconciliationTimer = null;
+  }
 }
 
 function shouldTryRedis() {
@@ -1417,22 +1435,24 @@ if (typeof process !== "undefined" && process.on) {
     }
   }
 
-  process.on("SIGTERM", () => {
+  const onSigterm = () => {
     console.log("[sessionStore] SIGTERM received, dumping memory sessions...");
-    // Attempt to backfill to Redis first if possible
     if (redis && shouldTryRedis()) {
       backfillMemorySessionsToRedis().finally(() => dumpMemorySessions());
     } else {
       dumpMemorySessions();
     }
-  });
+  };
 
-  process.on("SIGINT", () => {
+  const onSigint = () => {
     console.log("[sessionStore] SIGINT received, dumping memory sessions...");
     if (redis && shouldTryRedis()) {
       backfillMemorySessionsToRedis().finally(() => dumpMemorySessions());
     } else {
       dumpMemorySessions();
     }
-  });
+  };
+
+  process.on("SIGTERM", onSigterm);
+  process.on("SIGINT", onSigint);
 }
