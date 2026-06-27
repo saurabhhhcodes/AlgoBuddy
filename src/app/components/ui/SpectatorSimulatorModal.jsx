@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Terminal, Eye, MessageSquare, Send, AlertCircle } from "lucide-react";
 import { io } from "socket.io-client";
 import confetti from "canvas-confetti";
-import useArenaProfile from "@/app/hooks/useArenaProfile";
+import { useArenaProfile } from "@/app/hooks/useArenaProfile";
 
 const EMOTES = ["🔥", "👏", "🤯", "😂", "❤️"];
 
@@ -48,6 +48,8 @@ export default function SpectatorSimulatorModal({ isOpen, onClose, matchData }) 
 
   const socketRef = useRef(null);
   const chatEndRef = useRef(null);
+  const p1TypingTimeoutRef = useRef(null);
+  const p2TypingTimeoutRef = useRef(null);
 
   // Auto scroll chat
   useEffect(() => {
@@ -86,11 +88,27 @@ export default function SpectatorSimulatorModal({ isOpen, onClose, matchData }) 
         if (data.linesCoded !== undefined) setP1Lines(data.linesCoded);
         if (data.cpm !== undefined) setP1Cpm(data.cpm);
         if (data.language) setP1Language(data.language);
+
+        if (p1TypingTimeoutRef.current) clearTimeout(p1TypingTimeoutRef.current);
+        if (data.isTyping) {
+          p1TypingTimeoutRef.current = setTimeout(() => {
+            setP1Status(prev => prev === "Typing..." ? "Idle" : prev);
+            setP1Cpm(0);
+          }, 3000);
+        }
       } else if (data.userId === p2.userId) {
         setP2Status(data.isTyping ? "Typing..." : "Idle");
         if (data.linesCoded !== undefined) setP2Lines(data.linesCoded);
         if (data.cpm !== undefined) setP2Cpm(data.cpm);
         if (data.language) setP2Language(data.language);
+
+        if (p2TypingTimeoutRef.current) clearTimeout(p2TypingTimeoutRef.current);
+        if (data.isTyping) {
+          p2TypingTimeoutRef.current = setTimeout(() => {
+            setP2Status(prev => prev === "Typing..." ? "Idle" : prev);
+            setP2Cpm(0);
+          }, 3000);
+        }
       }
     });
 
@@ -140,6 +158,8 @@ export default function SpectatorSimulatorModal({ isOpen, onClose, matchData }) 
     });
 
     return () => {
+      if (p1TypingTimeoutRef.current) clearTimeout(p1TypingTimeoutRef.current);
+      if (p2TypingTimeoutRef.current) clearTimeout(p2TypingTimeoutRef.current);
       socket.emit("leave_spectate_match", { matchId: matchData.matchId });
       socket.disconnect();
       socketRef.current = null;
