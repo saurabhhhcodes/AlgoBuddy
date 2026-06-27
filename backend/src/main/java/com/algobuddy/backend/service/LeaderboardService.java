@@ -1,11 +1,9 @@
 package com.algobuddy.backend.service;
 
 import com.algobuddy.backend.dto.LeaderboardEntryDto;
-import com.algobuddy.backend.entity.Friendship;
 import com.algobuddy.backend.entity.UserArenaProfile;
 import com.algobuddy.backend.entity.UserPracticeStats;
 import com.algobuddy.backend.entity.UserProfile;
-import com.algobuddy.backend.repository.FriendshipRepository;
 import com.algobuddy.backend.repository.UserArenaProfileRepository;
 import com.algobuddy.backend.repository.UserPracticeStatsRepository;
 import com.algobuddy.backend.repository.UserProfileRepository;
@@ -15,9 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +21,6 @@ public class LeaderboardService {
     private final UserPracticeStatsRepository statsRepository;
     private final UserArenaProfileRepository arenaRepository;
     private final UserProfileRepository profileRepository;
-    private final FriendshipRepository friendshipRepository;
 
     public List<LeaderboardEntryDto> getGlobalStreakLeaderboard() {
         List<UserPracticeStats> stats = statsRepository.findAll(Sort.by(Sort.Direction.DESC, "currentStreak"));
@@ -36,27 +30,6 @@ public class LeaderboardService {
     public List<LeaderboardEntryDto> getGlobalArenaLeaderboard() {
         List<UserArenaProfile> profiles = arenaRepository.findAll(Sort.by(Sort.Direction.DESC, "rating"));
         return mapToArenaEntries(profiles);
-    }
-
-    public List<LeaderboardEntryDto> getFriendsStreakLeaderboard(UUID userId) {
-        Set<UUID> friendIds = getFriendIdsIncludingSelf(userId);
-        List<UserPracticeStats> stats = statsRepository.findAll(Sort.by(Sort.Direction.DESC, "currentStreak"))
-                .stream().filter(s -> friendIds.contains(s.getUserId())).collect(Collectors.toList());
-        return mapToStreakEntries(stats);
-    }
-
-    public List<LeaderboardEntryDto> getFriendsArenaLeaderboard(UUID userId) {
-        Set<UUID> friendIds = getFriendIdsIncludingSelf(userId);
-        List<UserArenaProfile> profiles = arenaRepository.findAll(Sort.by(Sort.Direction.DESC, "rating"))
-                .stream().filter(p -> friendIds.contains(p.getUserId())).collect(Collectors.toList());
-        return mapToArenaEntries(profiles);
-    }
-
-    private Set<UUID> getFriendIdsIncludingSelf(UUID userId) {
-        Set<UUID> ids = friendshipRepository.findByUserId(userId).stream()
-                .map(Friendship::getFriendId).collect(Collectors.toSet());
-        ids.add(userId);
-        return ids;
     }
 
     private List<LeaderboardEntryDto> mapToStreakEntries(List<UserPracticeStats> statsList) {

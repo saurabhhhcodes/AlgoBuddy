@@ -19,7 +19,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-@SuppressWarnings("null")
 public class ArenaServiceUnitTest {
 
     private UserArenaProfileRepository profileRepository;

@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings("null")
 public class ArenaService {
 
     private static final Logger log = LoggerFactory.getLogger(ArenaService.class);
