@@ -41,6 +41,7 @@ export default function SpectatorSimulatorModal({ isOpen, onClose, matchData }) 
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
   const [activeEmotes, setActiveEmotes] = useState([]);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const socketRef = useRef(null);
   const chatEndRef = useRef(null);
@@ -261,11 +262,17 @@ export default function SpectatorSimulatorModal({ isOpen, onClose, matchData }) 
               />
             </div>
             
-            <div className="flex items-center gap-3 z-10">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary">
-                <Eye size={18} />
+            <div className="flex items-center gap-4 z-10">
+              <div className="bg-slate-200 dark:bg-[#1a1a24] px-3 py-1 rounded-full text-sm font-mono text-slate-700 dark:text-slate-300 font-bold tracking-widest border border-slate-300 dark:border-slate-700">
+                {formatTime(seconds)}
               </div>
-              <div>
+              <button 
+                onClick={() => setIsChatOpen(prev => !prev)} 
+                className="lg:hidden p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+              >
+                <MessageSquare size={18} />
+              </button>
+              <div className="hidden sm:block">
                 <h3 className="font-bold text-slate-800 dark:text-neutral-200 text-sm leading-tight">
                   Spectator Mode: {matchData?.topic || "Match"}
                 </h3>
@@ -281,8 +288,17 @@ export default function SpectatorSimulatorModal({ isOpen, onClose, matchData }) 
             </button>
           </div>
 
-          <div className="flex-1 flex overflow-hidden">
-            {/* Arena View (Left 75%) */}
+          <div className="flex w-full h-[calc(100%-4rem)] overflow-hidden relative">
+        
+        {/* Overlay for mobile when chat is open */}
+        {isChatOpen && (
+          <div 
+            className="absolute inset-0 bg-black/40 z-30 lg:hidden"
+            onClick={() => setIsChatOpen(false)}
+          />
+        )}
+
+        {/* Left Side: Game State (Player 1 vs Player 2) */}
             <div className="flex-[3] flex overflow-hidden border-r border-slate-200 dark:border-neutral-800 relative">
               
               {/* Floating Emotes Layer */}
@@ -304,7 +320,7 @@ export default function SpectatorSimulatorModal({ isOpen, onClose, matchData }) 
               </div>
 
               {/* Player 1 View */}
-              <div className="flex-1 border-r border-slate-200 dark:border-neutral-800 flex flex-col bg-slate-50 dark:bg-[#0a0a0c]">
+              <div className="w-full lg:w-3/4 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-800 bg-slate-50/50 dark:bg-[#0a0a0f] overflow-y-auto">
                 <div className="h-14 border-b border-slate-200 dark:border-neutral-800 flex flex-col justify-center px-4 bg-white dark:bg-[#111116]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -463,7 +479,12 @@ export default function SpectatorSimulatorModal({ isOpen, onClose, matchData }) 
             </div>
 
             {/* Spectator Chat & Emotes (Right 25%) */}
-            <div className="flex-1 flex flex-col bg-white dark:bg-[#0c0c0e]">
+            <div className={`
+              absolute lg:relative right-0 top-0 bottom-0 z-40
+              w-80 lg:w-1/4 h-full bg-white dark:bg-[#0c0c0e] border-l border-slate-200 dark:border-slate-800 flex flex-col
+              transition-transform duration-300 ease-in-out
+              ${isChatOpen ? "translate-x-0 shadow-2xl lg:shadow-none" : "translate-x-full lg:translate-x-0"}
+            `}>
               <div className="h-10 border-b border-slate-200 dark:border-neutral-800 flex items-center px-4 bg-slate-50 dark:bg-[#15151a]">
                 <MessageSquare size={14} className="text-slate-500 mr-2" />
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Spectator Chat</span>
