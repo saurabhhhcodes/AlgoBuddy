@@ -125,6 +125,13 @@ export default function QuizPage() {
       href: "/visualizer/recursion/stack/quiz",
       color: "bg-slate-600 hover:bg-slate-700",
     },
+    {
+      title: "Recursive Binary Search Quiz",
+      description:
+        "Test your understanding of Recursive Binary Search with multiple-choice questions.",
+      href: "/visualizer/recursion/binary-search/quiz",
+      color: "bg-blue-700 hover:bg-blue-800",
+    },
   ];
 
   const [searchQuery, setSearchQuery] = useState("");
