@@ -397,14 +397,6 @@ async function isRateLimited(userId) {
 }
 
 io.on("connection", async (socket) => {
-  // Connection-level rate limiting to prevent JWT brute-forcing
-  const clientIp = socket.handshake.address;
-  if (isConnectionRateLimited(clientIp)) {
-    socket.emit("error", { message: "Too many connection attempts. Please try again later." });
-    socket.disconnect(true);
-    return;
-  }
-
   // Verify Supabase JWT from handshake auth using JWKS
   const token = socket.handshake.auth?.token;
   const authPayload = await verifyAuthToken(token);
