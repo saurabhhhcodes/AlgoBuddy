@@ -195,7 +195,7 @@ Please explain exactly what is happening in this step in detail.`;
                 <div className="flex flex-col">
                   <button
                     onClick={startSelectionSort}
-                    disabled={!array.length}
+                    disabled={!array.length || engine.isPlaying}
                     className="w-full bg-[#a435f0] hover:bg-[#8f2cd6] text-white px-4 py-2 rounded disabled:opacity-50 transition-colors"
                   >
                     {engine.isPlaying ? "Sorting..." : sorted ? "Restart Selection Sort" : "Start Selection Sort"}

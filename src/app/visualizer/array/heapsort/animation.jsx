@@ -230,7 +230,7 @@ Please explain exactly what is happening in this step in detail.`;
           <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
             <button
               onClick={startHeapSort}
-              disabled={!array.length}
+              disabled={!array.length || engine.isPlaying}
               className="w-full rounded bg-[#a435f0] px-4 py-2 text-sm text-white shadow-sm transition-colors hover:bg-[#8f2cd6] disabled:opacity-75 sm:text-base"
             >
               {engine.isPlaying ? "Sorting..." : currentStepData?.isSorted ? "Restart" : "Start Heap Sort"}
