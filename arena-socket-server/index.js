@@ -5,8 +5,9 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const jwksClient = require('jwks-rsa');
-const redisUrl = process.env.REDIS_URL;
-const Redis = redisUrl ? require("ioredis") : require("ioredis-mock");
+const { resolveRedisClientConfig } = require("./redisClientConfig");
+const { useMock, redisUrl: resolvedRedisUrl } = resolveRedisClientConfig();
+const Redis = useMock ? require("ioredis-mock") : require("ioredis");
 const { createAdapter } = require("@socket.io/redis-adapter");
 
 const app = express();
@@ -54,7 +55,7 @@ app.use(cors({
 const server = http.createServer(app);
 
 // Redis setup
-const pubClient = redisUrl ? new Redis(redisUrl) : new Redis();
+const pubClient = useMock ? new Redis() : new Redis(resolvedRedisUrl);
 const subClient = pubClient.duplicate();
 const redisClient = pubClient.duplicate();
 
