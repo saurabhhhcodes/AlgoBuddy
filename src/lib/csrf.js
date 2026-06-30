@@ -14,12 +14,21 @@ const TRUSTED_ORIGINS = (() => {
   return origins;
 })();
 
+function parseOrigin(value) {
+  if (!value) return null;
+
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
 export function validateCsrfOrigin(request) {
   const origin = request.headers.get("origin");
   const referer = request.headers.get("referer");
-  const source = origin || referer || "";
-  const normalized = source.replace(/\/+$/, "");
-  return TRUSTED_ORIGINS.has(normalized);
+  const normalizedOrigin = parseOrigin(origin) || parseOrigin(referer);
+  return normalizedOrigin ? TRUSTED_ORIGINS.has(normalizedOrigin) : false;
 }
 
 const STATE_CHANGING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
