@@ -30,6 +30,9 @@ class BoundedMap {
   delete(key) {
     return this._map.delete(key);
   }
+  clear() {
+    this._map.clear();
+  }
   entries() {
     return this._map.entries();
   }
