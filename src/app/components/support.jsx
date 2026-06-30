@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 // -------------------------------------------------------------------
 import { FiX, FiMail, FiMessageSquare, FiSend, FiChevronRight } from "react-icons/fi"; // Added FiChevronRight import for Support Center icon
 import dynamic from "next/dynamic";
+import Link from "next/link";
 
 const Turnstile = dynamic(
   () => import("@marsidev/react-turnstile").then((mod) => mod.Turnstile),
@@ -315,15 +316,7 @@ const ContactSupportPopup = () => {
                         Need immediate help?
                       </h4>
                       <p className="text-blue-700 dark:text-blue-300 text-sm">
-                        Check out our{" "}
-                        <a href="javascript:void(0)" className="underline">
-                          FAQs
-                        </a>{" "}
-                        or join our{" "}
-                        <a href="javascript:void(0)" className="underline">
-                          community forum
-                        </a>
-                        .
+                        Check out our{" "}<Link href="/faq" className="underline">FAQs</Link>{" "}or join our{" "}<Link href="/community" className="underline">community forum</Link>.
                       </p>
                     </div>
                     <div>
@@ -337,20 +330,20 @@ const ContactSupportPopup = () => {
                           "What are your business hours?",
                           "How do I cancel my subscription?",
                         ].map((question, index) => (
-                          <a
+                          <Link
                             key={index}
-                            href="javascript:void(0)"
+                            href="/faq"
                             className="block p-3 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-lg transition-colors"
                           >
                             {question}
-                          </a>
+                          </Link>
                         ))}
                       </div>
                     </div>
                     <div className="pt-2">
-                      <button className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                      <Link href="/faq" className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
                         View all help articles <FiChevronRight />
-                      </button>
+                      </Link>
                     </div>
                   </div>
                 )}
