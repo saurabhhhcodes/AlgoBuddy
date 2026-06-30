@@ -1,5 +1,5 @@
 import React from "react";
-import { Play, Pause, RotateCcw, ChevronLeft, ChevronRight, Bot } from "lucide-react";
+import { Play, Pause, RotateCcw, ChevronLeft, ChevronRight, ChevronsRight, Bot } from "lucide-react";
 
 export default function PlaybackControls({
   isPaused: pausedProp,
@@ -25,6 +25,11 @@ export default function PlaybackControls({
   // Support both `isPaused`/`onTogglePlayPause` (new) and `isPlaying`/`onPlayPause` (legacy) prop conventions.
   const isPlaying = pausedProp !== undefined ? !pausedProp : (playingProp ?? false);
   const handlePlayPause = toggleProp || playPauseProp || (() => {});
+  const handleSkipToEnd = () => {
+    if (onTimelineChange && totalSteps !== undefined) {
+      onTimelineChange(totalSteps);
+    }
+  };
   return (
     <div
       role="toolbar"
@@ -91,6 +96,19 @@ export default function PlaybackControls({
               title="Reset"
             >
               <RotateCcw size={18} aria-hidden="true" />
+            </button>
+          )}
+
+          {onTimelineChange && totalSteps !== undefined && (
+            <button
+              type="button"
+              onClick={handleSkipToEnd}
+              disabled={disabled}
+              aria-label="Skip to end of visualization"
+              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#a435f0] focus:ring-offset-2 focus:ring-offset-slate-900"
+              title="Skip to End"
+            >
+              <ChevronsRight size={20} aria-hidden="true" />
             </button>
           )}
         </div>
