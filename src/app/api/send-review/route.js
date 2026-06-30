@@ -3,6 +3,7 @@ import { checkRateLimit, checkGlobalSmtpQuota } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
 import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
+import { buildReviewTextBody } from "@/lib/reviewEmail";
 
 function escapeHtml(value) {
   return String(value)
@@ -115,6 +116,12 @@ export async function POST(request) {
       replyTo: trimmedEmail,
       to: inboxEmail,
       subject: `New Review Submission from ${trimmedName}`,
+      text: buildReviewTextBody({
+        name: trimmedName,
+        email: trimmedEmail,
+        rating: safeRating,
+        review: trimmedReview,
+      }),
       html: `
         <h2>New Review Received</h2>
         <p><strong>Name:</strong> ${escapeHtml(trimmedName)}</p>
