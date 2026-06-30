@@ -5,6 +5,7 @@ import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
 import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
+import { getSafeSignupErrorMessage } from "@/lib/authSignupError";
 
 function getValidUrl(value) {
   if (!value) return null;
@@ -333,7 +334,8 @@ export async function POST(req) {
       });
 
       if (error) {
-        return jsonResponse({ success: false, message: error.message }, 400);
+        console.error("[/api/auth signup] Supabase error:", error);
+        return jsonResponse({ success: false, message: getSafeSignupErrorMessage() }, 400);
       }
 
       if (emailConfirm) {
