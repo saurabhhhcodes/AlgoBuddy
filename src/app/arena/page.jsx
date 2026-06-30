@@ -34,6 +34,7 @@ import {
 import { useArenaProfile } from "@/app/hooks/useArenaProfile";
 import { useSheetProgress } from "@/app/hooks/useSheetProgress";
 import { practiceData } from "@/lib/practiceData";
+import { supabase } from "@/lib/supabase";
 
 // Mock live battles feed is removed, we use liveMatches
 
@@ -120,15 +121,32 @@ export default function ArenaPage() {
   useEffect(() => {
     let timeoutId;
     let isOffline = false;
+    let cancelled = false;
 
     const fetchLiveMatches = async () => {
       try {
+        if (loading || !user) {
+          setLiveMatches([]);
+          return;
+        }
+
+        const { data: { session } } = await supabase.auth.getSession();
+        const accessToken = session?.access_token;
+        if (!accessToken) {
+          setLiveMatches([]);
+          return;
+        }
+
         const socketUrl = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || 
           (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.")
             ? `http://${window.location.hostname}:4000`
             : "https://algobuddy-socket-server.onrender.com");
           
-        const res = await fetch(`${socketUrl}/api/matches/active`);
+        const res = await fetch(`${socketUrl}/api/matches/active`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
         if (res.ok) {
           const data = await res.json();
           setLiveMatches(data.matches || []);
@@ -136,6 +154,9 @@ export default function ArenaPage() {
             isOffline = false;
             console.log("Live matches server is back online.");
           }
+        } else if (res.status === 401) {
+          setLiveMatches([]);
+          isOffline = true;
         } else {
           throw new Error(`Server returned status: ${res.status}`);
         }
@@ -145,6 +166,7 @@ export default function ArenaPage() {
           console.warn("Live matches server is offline. Real-time updates disabled. Retrying less frequently.");
         }
       } finally {
+        if (cancelled || loading || !user) return;
         // Schedule next poll: 5 seconds if online, 60 seconds if offline
         const delay = isOffline ? 60000 : 5000;
         timeoutId = setTimeout(fetchLiveMatches, delay);
@@ -152,8 +174,11 @@ export default function ArenaPage() {
     };
 
     fetchLiveMatches();
-    return () => clearTimeout(timeoutId);
-  }, []);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [loading, user]);
 
   // Modals state
   const [matchmakingOpen, setMatchmakingOpen] = useState(false);

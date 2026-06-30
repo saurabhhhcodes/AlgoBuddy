@@ -9,6 +9,7 @@ const jwksClient = require('jwks-rsa');
 const redisUrl = process.env.REDIS_URL;
 const Redis = redisUrl ? require("ioredis") : require("ioredis-mock");
 const { createAdapter } = require("@socket.io/redis-adapter");
+const { requireBearerAuth } = require("./httpAuth");
 
 class BoundedMap {
   constructor(maxSize = 10000) {
@@ -922,6 +923,9 @@ async function scanRedisKeys(pattern) {
 }
 
 app.get("/api/matches/active", async (req, res) => {
+  const authPayload = await requireBearerAuth(req, res, verifyAuthToken);
+  if (!authPayload) return;
+
   try {
     const matchKeys = await scanRedisKeys("{arena}:match:*");
     const activeMatches = [];
