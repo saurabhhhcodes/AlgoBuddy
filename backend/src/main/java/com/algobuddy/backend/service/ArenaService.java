@@ -167,6 +167,11 @@ public class ArenaService {
 
     @Transactional
     public void initMatch(UUID requestingUserId, com.algobuddy.backend.dto.InitMatchRequest request) {
+        initMatch(requestingUserId, request, null);
+    }
+
+    @Transactional
+    public void initMatch(UUID requestingUserId, com.algobuddy.backend.dto.InitMatchRequest request, String accessToken) {
         if (request.getMatchId() == null || request.getMatchId().isEmpty()) {
             throw new IllegalArgumentException("matchId is required");
         }
@@ -184,7 +189,7 @@ public class ArenaService {
         } else {
             // Verify the match pair via the WebSocket matchmaking server (Redis-backed)
             // This ensures the opponent actually consented through WebSocket matchmaking
-            opponentId = verifyMatchmakingPair(request.getMatchId(), requestingUserId);
+            opponentId = verifyMatchmakingPair(request.getMatchId(), requestingUserId, accessToken);
         }
 
         ArenaMatch match = ArenaMatch.builder()
@@ -200,7 +205,7 @@ public class ArenaService {
         matchRepository.save(match);
     }
 
-    private UUID verifyMatchmakingPair(String matchId, UUID requestingUserId) {
+    private UUID verifyMatchmakingPair(String matchId, UUID requestingUserId, String accessToken) {
         String socketServerUrl = System.getenv("SOCKET_SERVER_URL");
         if (socketServerUrl == null || socketServerUrl.isEmpty()) {
             socketServerUrl = "http://localhost:4000";
@@ -211,6 +216,9 @@ public class ArenaService {
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(3000);
             conn.setReadTimeout(3000);
+            if (accessToken != null && !accessToken.isBlank()) {
+                conn.setRequestProperty("Authorization", "Bearer " + accessToken);
+            }
 
             int status = conn.getResponseCode();
             if (status == 200) {
@@ -239,7 +247,7 @@ public class ArenaService {
         throw new SecurityException("Match verification failed. Opponent has not consented to this match.");
     }
 
-    private UUID verifyMatchResult(String matchId, UUID requestingUserId) {
+    private UUID verifyMatchResult(String matchId, UUID requestingUserId, String accessToken) {
         String socketServerUrl = System.getenv("SOCKET_SERVER_URL");
         if (socketServerUrl == null || socketServerUrl.isEmpty()) {
             socketServerUrl = "http://localhost:4000";
@@ -250,6 +258,9 @@ public class ArenaService {
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(3000);
             conn.setReadTimeout(3000);
+            if (accessToken != null && !accessToken.isBlank()) {
+                conn.setRequestProperty("Authorization", "Bearer " + accessToken);
+            }
 
             int status = conn.getResponseCode();
             if (status == 200) {
@@ -290,8 +301,12 @@ public class ArenaService {
         }
     }
 
-    @CacheEvict(value = {"arenaLeaderboard", "globalArenaLeaderboard"}, allEntries = true)
     public void recordMatchResult(UUID requestingUserId, com.algobuddy.backend.dto.RecordMatchRequest request) {
+        recordMatchResult(requestingUserId, request, null);
+    }
+
+    @CacheEvict(value = {"arenaLeaderboard", "globalArenaLeaderboard"}, allEntries = true)
+    public void recordMatchResult(UUID requestingUserId, com.algobuddy.backend.dto.RecordMatchRequest request, String accessToken) {
         checkMatchResultRateLimit(requestingUserId);
 
         String matchIdStr = request.getMatchId();
@@ -302,7 +317,7 @@ public class ArenaService {
         boolean isWinner = request.isWinner();
 
         if (!matchIdStr.startsWith("mock-match-")) {
-            UUID verifiedWinnerId = verifyMatchResult(matchIdStr, requestingUserId);
+            UUID verifiedWinnerId = verifyMatchResult(matchIdStr, requestingUserId, accessToken);
             if (!verifiedWinnerId.equals(requestingUserId)) {
                 throw new SecurityException("Match result conflict: verified winner does not match claim");
             }

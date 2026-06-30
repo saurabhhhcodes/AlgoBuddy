@@ -6,6 +6,7 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const jwksClient = require('jwks-rsa');
+const { authorizeArenaRoute } = require("./routeAuth");
 const redisUrl = process.env.REDIS_URL;
 const Redis = redisUrl ? require("ioredis") : require("ioredis-mock");
 const { createAdapter } = require("@socket.io/redis-adapter");
@@ -863,18 +864,23 @@ app.get("/debug", async (req, res) => {
 app.get("/api/verify-match/:matchId/:userId", async (req, res) => {
   try {
     const { matchId, userId } = req.params;
+    const authorizedUserId = await authorizeArenaRoute(req, res, userId, verifyAuthToken);
+    if (!authorizedUserId) {
+      return;
+    }
+
     const matchKey = `{arena}:match:${matchId}`;
     const matchStr = await redisClient.get(matchKey);
     if (!matchStr) {
-      return res.json({ verified: false });
+      return res.status(404).json({ verified: false });
     }
     const match = JSON.parse(matchStr);
     const players = match.players || [];
-    const isPlayer = players.some(p => p.userId === userId);
+    const isPlayer = players.some(p => p.userId === authorizedUserId);
     if (!isPlayer) {
-      return res.json({ verified: false });
+      return res.status(404).json({ verified: false });
     }
-    const opponent = players.find(p => p.userId !== userId);
+    const opponent = players.find(p => p.userId !== authorizedUserId);
     res.json({
       verified: true,
       opponentId: opponent ? opponent.userId : null
@@ -888,12 +894,22 @@ app.get("/api/verify-match/:matchId/:userId", async (req, res) => {
 app.get("/api/verify-match-result/:matchId/:userId", async (req, res) => {
   try {
     const { matchId, userId } = req.params;
+    const authorizedUserId = await authorizeArenaRoute(req, res, userId, verifyAuthToken);
+    if (!authorizedUserId) {
+      return;
+    }
+
     const matchKey = `{arena}:match:${matchId}`;
     const matchStr = await redisClient.get(matchKey);
     if (!matchStr) {
-      return res.json({ verified: false, winnerId: null });
+      return res.status(404).json({ verified: false, winnerId: null });
     }
     const match = JSON.parse(matchStr);
+    const players = match.players || [];
+    const isPlayer = players.some(p => p.userId === authorizedUserId);
+    if (!isPlayer) {
+      return res.status(404).json({ verified: false, winnerId: null });
+    }
 
     if (match.status === "completed" && match.winnerId) {
       return res.json({ verified: true, winnerId: match.winnerId });

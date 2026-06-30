@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -58,16 +60,16 @@ public class ArenaController {
     @PostMapping("/match/init")
     @Operation(summary = "Initialize match", description = "Creates a match record before the duel begins. Must be called when both players are matched.")
     @ApiResponse(responseCode = "200", description = "Match initialized successfully")
-    public ResponseEntity<String> initMatch(@CurrentUserId UUID userId, @RequestBody InitMatchRequest request) {
-        arenaService.initMatch(userId, request);
+    public ResponseEntity<String> initMatch(@CurrentUserId UUID userId, @AuthenticationPrincipal Jwt jwt, @RequestBody InitMatchRequest request) {
+        arenaService.initMatch(userId, request, jwt != null ? jwt.getTokenValue() : null);
         return ResponseEntity.ok("Match initialized successfully");
     }
 
     @PostMapping("/match-result")
     @Operation(summary = "Record match result", description = "Records the outcome of an arena match.")
     @ApiResponse(responseCode = "200", description = "Match result recorded successfully")
-    public ResponseEntity<String> recordMatchResult(@CurrentUserId UUID userId, @Valid @RequestBody com.algobuddy.backend.dto.RecordMatchRequest request) {
-        arenaService.recordMatchResult(userId, request);
+    public ResponseEntity<String> recordMatchResult(@CurrentUserId UUID userId, @AuthenticationPrincipal Jwt jwt, @Valid @RequestBody com.algobuddy.backend.dto.RecordMatchRequest request) {
+        arenaService.recordMatchResult(userId, request, jwt != null ? jwt.getTokenValue() : null);
         return ResponseEntity.ok("Match result recorded successfully");
     }
 }
