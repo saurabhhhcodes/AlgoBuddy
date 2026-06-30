@@ -2,6 +2,15 @@ import { getAuthenticatedUser } from "@/lib/auth";
 import { getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
 import { sendEmail } from "@/lib/email";
 
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 export async function PATCH(request, { params }) {
   try {
     const authResult = await getAuthenticatedUser();
@@ -58,6 +67,8 @@ export async function PATCH(request, { params }) {
     const statusLabel = status === "accepted" ? "accepted" : "rejected";
     const jobTitle = application.job?.title || "a job";
     const companyName = application.job?.company || "";
+    const escapedJobTitle = escapeHtml(jobTitle);
+    const escapedCompanyName = escapeHtml(companyName);
 
     const { error: notifError } = await adminClient
       .from("notifications")
@@ -88,7 +99,7 @@ export async function PATCH(request, { params }) {
           <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
             <h2 style="color: #1e293b;">Application Status Update</h2>
             <p style="color: #475569; line-height: 1.6;">
-              Your application for <strong>${jobTitle}</strong> at <strong>${companyName}</strong>
+              Your application for <strong>${escapedJobTitle}</strong> at <strong>${escapedCompanyName}</strong>
               has been <strong>${statusLabel}</strong>.
             </p>
             <a href="${appUrl}/my-applications"
