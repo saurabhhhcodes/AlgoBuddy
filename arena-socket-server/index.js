@@ -158,8 +158,8 @@ const ATOMIC_POP_OPPONENT_SCRIPT = `
   return '{"status":"QUEUED"}'
 `;
 
-// Phase 2: Atomically create match state (only called after JS confirms liveness)
-const ATOMIC_CREATE_MATCH_SCRIPT = `
+      // Phase 2: Atomically create match state (only called after JS confirms liveness)
+      const ATOMIC_CREATE_MATCH_SCRIPT = `
   local matchKey = KEYS[1]
   local socketKey = KEYS[2]
   local oppKey = KEYS[3]
@@ -432,7 +432,10 @@ io.on("connection", async (socket) => {
     console.log(`Authenticated user connected: ${socket.id}, userId: ${socket.data.userId}`);
   }
 
+  await redisClient.hset(`{arena}:socket:${socket.id}`, 'connected', '1');
+
   socket.on("join_matchmaking", async (data) => {
+    let opponent = null;
     try {
       if (await isRateLimited(socket.data.userId)) return;
 
@@ -466,12 +469,11 @@ io.on("connection", async (socket) => {
       const result = JSON.parse(resultStr);
 
       if (result.status === 'MATCH_FOUND') {
-        const opponent = result.opponent;
+        opponent = result.opponent;
 
-        // Phase 2: Liveness check (before any state mutation)
-        const opponentSocket = io.sockets.sockets.get(opponent.socketId);
-        if (!opponentSocket || !opponentSocket.connected) {
-          // Re-push opponent back to queue (they were popped but no match was created)
+        // Phase 2: Cross-instance liveness check via Redis
+        const opponentAlive = await redisClient.exists(`{arena}:socket:${opponent.socketId}`);
+        if (!opponentAlive) {
           const opponentEntry = JSON.stringify({
             userId: opponent.userId,
             socketId: opponent.socketId,
@@ -518,12 +520,38 @@ io.on("connection", async (socket) => {
           io.in(opponent.socketId).socketsJoin(matchId);
 
           console.log(`Match found: ${opponent.userId} vs ${socket.data.userId}`);
+        } else {
+          const opponentEntry = JSON.stringify({
+            userId: opponent.userId,
+            socketId: opponent.socketId,
+            name: opponent.name || "Player",
+            rating: opponent.rating || 1200,
+            level: opponent.level || 1,
+            topic: targetTopic,
+            difficulty: targetDifficulty,
+          });
+          await redisClient.rpush(queueKey, opponentEntry);
+          console.log(`Match creation failed (status: ${createParsed.status}), re-queued opponent: ${opponent.userId}`);
+          socket.emit("matchmaking_error", { message: "Could not create match. Please try again." });
         }
       } else {
         console.log(`Added to queue ${queueKey}`);
       }
     } catch (error) {
       console.error(`[join_matchmaking] Error for user ${socket.data.userId}:`, error);
+      if (opponent) {
+        const opponentEntry = JSON.stringify({
+          userId: opponent.userId,
+          socketId: opponent.socketId,
+          name: opponent.name || "Player",
+          rating: opponent.rating || 1200,
+          level: opponent.level || 1,
+          topic: targetTopic,
+          difficulty: targetDifficulty,
+        });
+        await redisClient.rpush(queueKey, opponentEntry);
+        console.log(`Error during matchmaking, re-queued opponent: ${opponent.userId}`);
+      }
       socket.emit("error", { message: "Matchmaking error. Please try again." });
     }
   });
