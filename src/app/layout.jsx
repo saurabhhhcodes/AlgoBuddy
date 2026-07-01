@@ -95,31 +95,28 @@ export default async function RootLayout({ children }) {
         <link rel="icon" href="/favicon.ico?v=3" />
 
         {/* Prevent flash: apply saved theme before React hydrates */}
-      
-<script
-  dangerouslySetInnerHTML={{
-    __html: `...`
-  }}
-/>
-        
+        <Script
+          id="theme-script"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('theme') || 'light';
+                  if (theme === 'dark') document.documentElement.classList.add('dark');
+                  else document.documentElement.classList.remove('dark');
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
         {/* Google AdSense Script */}
-<Script
-  async
-  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=..."
-  strategy="afterInteractive"
-  crossOrigin="anonymous"
-/>
-<Script id="theme-script" strategy="beforeInteractive">
-  {`
-    (function() {
-      try {
-        var theme = localStorage.getItem('theme') || 'light';
-        if (theme === 'dark') document.documentElement.classList.add('dark');
-        else document.documentElement.classList.remove('dark');
-      } catch(e) {}
-    })();
-  `}
-</Script>
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5588131730389378"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
 
 
         {/* Google Analytics Script */}

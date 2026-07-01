@@ -112,25 +112,9 @@ export default function AuthForm({ isLogin = true }) {
       } else {
         const data = await api.request("/api/auth", {
           method: "POST",
-          body: { email, password, captchaToken, action: "signup", name } ,
-          
-
+          body: { email, password, captchaToken, action: "signup", name },
         });
-        console.log("API RESPONSE:", data);
-        try{
-          console.log({
-  email,
-  password,
-  name,
-  captchaToken,
-  action: isLogin ? "login" : "signup",
-})
-        }
-        catch{
-          console.log("Error:",error);
-          
-        
-        if (!data.success) throw new Error(data.message || "Signup failed"); }
+        if (!data.success) throw new Error(data.message || "Signup failed");
         toast.success(data.message || "Account created! Please sign in.");
         router.push("/login");
       }

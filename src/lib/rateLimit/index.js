@@ -205,6 +205,9 @@ export const sandboxLimiter = createRateLimiter({ maxRequests: 10, windowSeconds
 export const chatbotLimiter = createRateLimiter({ maxRequests: 10, windowSeconds: 60, prefix: "chatbot" });
 
 export async function checkRateLimit(key) {
+  if (process.env.NODE_ENV !== "production") {
+    return { allowed: true, remaining: 999, retryAfter: 0 };
+  }
   return apiLimiter.check(key);
 }
 
