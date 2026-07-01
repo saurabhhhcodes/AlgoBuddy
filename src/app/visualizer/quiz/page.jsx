@@ -82,6 +82,17 @@ export default function QuizPage() {
       topBarBg: "bg-teal-500/10 dark:bg-teal-500/20",
       iconStyle: "bg-teal-500/10 border border-teal-500/20 dark:border-teal-500/30 text-teal-600 dark:text-teal-400",
       btnBg: "bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600",
+    },
+    {
+      title: "Array Interview Patterns Quiz",
+      description: "Practice two pointers, sliding window, Kadane's algorithm, and prefix-sum problem solving.",
+      href: "/visualizer/array/interview-patterns/quiz",
+      icon: Search,
+      filename: "array_interview_patterns_quiz.js",
+      cardBorder: "border-amber-500/20 dark:border-amber-500/30",
+      topBarBg: "bg-amber-500/10 dark:bg-amber-500/20",
+      iconStyle: "bg-amber-500/10 border border-amber-500/20 dark:border-amber-500/30 text-amber-600 dark:text-amber-400",
+      btnBg: "bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600",
     }
   ];
 
