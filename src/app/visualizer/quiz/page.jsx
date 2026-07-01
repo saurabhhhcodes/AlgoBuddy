@@ -82,6 +82,17 @@ export default function QuizPage() {
       topBarBg: "bg-teal-500/10 dark:bg-teal-500/20",
       iconStyle: "bg-teal-500/10 border border-teal-500/20 dark:border-teal-500/30 text-teal-600 dark:text-teal-400",
       btnBg: "bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600",
+    },
+    {
+      title: "Queue Operations Quiz",
+      description: "Practice FIFO behavior, enqueue, dequeue, and underflow handling.",
+      href: "/visualizer/queue/operations/quiz",
+      icon: Layers,
+      filename: "queue_operations_quiz.js",
+      cardBorder: "border-rose-500/20 dark:border-rose-500/30",
+      topBarBg: "bg-rose-500/10 dark:bg-rose-500/20",
+      iconStyle: "bg-rose-500/10 border border-rose-500/20 dark:border-rose-500/30 text-rose-600 dark:text-rose-400",
+      btnBg: "bg-rose-600 hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600",
     }
   ];
 
