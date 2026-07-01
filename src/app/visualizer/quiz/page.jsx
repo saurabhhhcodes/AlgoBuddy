@@ -104,6 +104,28 @@ export default function QuizPage() {
       topBarBg: "bg-fuchsia-500/10 dark:bg-fuchsia-500/20",
       iconStyle: "bg-fuchsia-500/10 border border-fuchsia-500/20 dark:border-fuchsia-500/30 text-fuchsia-600 dark:text-fuchsia-400",
       btnBg: "bg-fuchsia-600 hover:bg-fuchsia-700 dark:bg-fuchsia-500 dark:hover:bg-fuchsia-600",
+    },
+    {
+      title: "Queue Types Quiz",
+      description: "Test your understanding of Single, Double Ended, Circular, Priority Queues.",
+      href: "/visualizer/queue/types/quiz",
+      icon: Layers,
+      filename: "queue_types_quiz.js",
+      cardBorder: "border-teal-500/20 dark:border-teal-500/30",
+      topBarBg: "bg-fuchsia-500/10 dark:bg-fuchsia-500/20",
+      iconStyle: "bg-fuchsia-500/10 border border-fuchsia-500/20 dark:border-fuchsia-500/30 text-fuchsia-600 dark:text-fuchsia-400",
+      btnBg: "bg-fuchsia-600 hover:bg-fuchsia-700 dark:bg-fuchsia-500 dark:hover:bg-fuchsia-600",
+    },
+    {
+      title: "Queue Implementation Quiz",
+      description: "Test your understanding of Queue implementation Using Arrays, Linked Lists.",
+      href: "/visualizer/queue/implementation/quiz",
+      icon: Layers,
+      filename: "queue_implementation_quiz.js",
+      cardBorder: "border-teal-500/20 dark:border-teal-500/30",
+      topBarBg: "bg-fuchsia-500/10 dark:bg-fuchsia-500/20",
+      iconStyle: "bg-fuchsia-500/10 border border-fuchsia-500/20 dark:border-fuchsia-500/30 text-fuchsia-600 dark:text-fuchsia-400",
+      btnBg: "bg-fuchsia-600 hover:bg-fuchsia-700 dark:bg-fuchsia-500 dark:hover:bg-fuchsia-600",
     }
   ];
 
