@@ -9,7 +9,7 @@ export function setMockDependencies(cookies, createServerClient) {
   createServerClientImpl = createServerClient;
 }
 
-function isValidSupabaseUrl(value) {
+export function isValidSupabaseUrl(value) {
   if (!value) return false;
   const trimmed = String(value).trim();
   if (trimmed.startsWith("Your ")) return false;
@@ -21,10 +21,10 @@ function isValidSupabaseUrl(value) {
   }
 }
 
-function isValidKey(value) {
+export function isValidKey(value) {
   if (!value) return false;
   const trimmed = String(value).trim();
-  return trimmed && !trimmed.startsWith("Your ");
+  return Boolean(trimmed) && !trimmed.startsWith("Your ");
 }
 
 export function getSupabaseConfig() {
