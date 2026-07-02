@@ -1052,7 +1052,7 @@ export default function ArenaPage() {
                   dateToCheck.setDate(today.getDate() + diff);
                   
                   const isFuture = diff > 0;
-                  const isActive = !isFuture && streakData?.isActive && streakData.isActive(dateToCheck);
+                  const isActive = !isFuture && -diff < (streakData?.current || 0);
                   
                   return (
                     <div key={day} className="flex flex-col items-center">
