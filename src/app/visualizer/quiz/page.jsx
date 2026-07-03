@@ -124,14 +124,10 @@ export default function QuizPage() {
       href: "/visualizer/queue/types/quiz",
       icon: Layers,
       filename: "queue_types_quiz.js",
-
       cardBorder: "border-orange-500/20 dark:border-orange-500/30",
-
       topBarBg: "bg-orange-500/10 dark:bg-orange-500/20",
-
       iconStyle:
         "bg-orange-500/10 border border-orange-500/20 dark:border-orange-500/30 text-orange-600 dark:text-orange-400",
-
       btnBg:
         "bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600",
     },
@@ -142,13 +138,10 @@ export default function QuizPage() {
       href: "/visualizer/queue/implementation/quiz",
       icon: Layers,
       filename: "queue_implementation_quiz.js",
-
       cardBorder: "border-emerald-500/20 dark:border-emerald-500/30",
       topBarBg: "bg-emerald-500/10 dark:bg-emerald-500/20",
-
       iconStyle:
         "bg-emerald-500/10 border border-emerald-500/20 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400",
-
       btnBg:
         "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600",
     },
@@ -159,13 +152,10 @@ export default function QuizPage() {
       href: "/visualizer/linkedlist/types/quiz",
       icon: Layers,
       filename: "linked_list_types_quiz.js",
-
       cardBorder: "border-blue-500/20 dark:border-blue-500/30",
       topBarBg: "bg-blue-500/10 dark:bg-blue-500/20",
-
       iconStyle:
         "bg-blue-500/10 border border-blue-500/20 dark:border-blue-500/30 text-blue-600 dark:text-blue-400",
-
       btnBg:
         "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600",
     },
@@ -176,13 +166,10 @@ export default function QuizPage() {
       href: "/visualizer/linkedlist/operations/quiz",
       icon: Layers,
       filename: "linked_list_operations_quiz.js",
-
       cardBorder: "border-blue-500/20 dark:border-blue-500/30",
       topBarBg: "bg-blue-500/10 dark:bg-blue-500/20",
-
       iconStyle:
         "bg-blue-500/10 border border-blue-500/20 dark:border-blue-500/30 text-blue-600 dark:text-blue-400",
-
       btnBg:
         "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600",
     },
@@ -281,6 +268,20 @@ export default function QuizPage() {
         "bg-cyan-500/10 border border-cyan-500/20 dark:border-cyan-500/30 text-cyan-600 dark:text-cyan-400",
       btnBg:
         "bg-cyan-600 hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600",
+    },
+    {
+      title: "Graph Traversal Quiz",
+      description:
+        "Practice Breadth-First Search (BFS) and Depth-First Search (DFS).",
+      href: "/visualizer/graph/traversal/quiz",
+      filename: "graph_traversal_quiz.js",
+      icon: Network,
+      cardBorder: "border-sky-500/20 dark:border-sky-500/30",
+      topBarBg: "bg-sky-500/10 dark:bg-sky-500/20",
+      iconStyle:
+        "bg-sky-500/10 border border-sky-500/20 dark:border-sky-500/30 text-sky-600 dark:text-sky-400",
+      btnBg:
+        "bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600",
     },
     {
       title: "Dynamic Programming Quiz",
