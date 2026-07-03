@@ -111,6 +111,11 @@ export default function ArenaPage() {
     }
   };
 
+  const rankProgress = Math.min(((profile?.xp || 0) % 1000) / 1000 * 100, 100);
+  const ringRadius = 62;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringDashoffset = ringCircumference - (rankProgress / 100) * ringCircumference;
+
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace("#", "");
@@ -636,11 +641,14 @@ export default function ArenaPage() {
                     </div>
 
                     <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
-                      <div className="relative mb-6">
-                        <div className="w-32 h-32 rounded-full border-4 border-slate-200 dark:border-neutral-800 flex items-center justify-center shadow-inner bg-white dark:bg-neutral-800 relative z-10">
-                          <Trophy size={64} className="text-slate-400" />
+                      <div className="relative mb-6 w-32 h-32 flex items-center justify-center">
+                        <svg className="absolute inset-0 w-full h-full transform -rotate-90 z-20 pointer-events-none" viewBox="0 0 128 128">
+                          <circle cx="64" cy="64" r="62" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-slate-200 dark:text-neutral-800" />
+                          <circle cx="64" cy="64" r="62" stroke="currentColor" strokeWidth="4" fill="transparent" strokeDasharray={ringCircumference} strokeDashoffset={ringDashoffset} strokeLinecap="round" className="text-primary transition-all duration-1000 ease-out" />
+                        </svg>
+                        <div className="w-[120px] h-[120px] rounded-full flex items-center justify-center shadow-inner bg-white dark:bg-neutral-800 relative z-10">
+                          <Trophy size={56} className="text-slate-400" />
                         </div>
-                        <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent border-l-transparent transform rotate-45 z-20"></div>
                       </div>
                       
                       <h3 className="text-2xl font-black text-slate-800 dark:text-neutral-200 uppercase tracking-widest mb-1">Unranked</h3>
