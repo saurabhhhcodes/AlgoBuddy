@@ -241,6 +241,20 @@ export default function QuizPage() {
         "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600",
     },
     {
+      title: "Tree Algorithms Quiz",
+      description:
+        "Practice LCA, Diameter, Height, Tree Views, Boundary Traversal, Vertical Order, Zigzag, Morris Traversal, and Serialization.",
+      href: "/visualizer/tree/algorithms/quiz",
+      filename: "tree_algorithms_quiz.js",
+      icon: GitBranch,
+      cardBorder: "border-green-500/20 dark:border-green-500/30",
+      topBarBg: "bg-green-500/10 dark:bg-green-500/20",
+      iconStyle:
+        "bg-green-500/10 border border-green-500/20 dark:border-green-500/30 text-green-600 dark:text-green-400",
+      btnBg:
+        "bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600",
+    },
+    {
       title: "Dynamic Programming Quiz",
       description:
         "Test your understanding of DP concepts including Memoization, Tabulation, Knapsack, and LCS.",
