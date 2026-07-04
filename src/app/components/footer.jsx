@@ -182,7 +182,7 @@ const Footer = () => {
             <div>
               <h3 className={footerHeading}>Quick Links</h3>
               <div className="space-y-4">
-                <Link href="/" className={footerLink}>
+                <Link href="/" className={footerLink} prefetch={true}>
                   Home
                 </Link>
                 <Link href="/visualizer" className={footerLink}>
