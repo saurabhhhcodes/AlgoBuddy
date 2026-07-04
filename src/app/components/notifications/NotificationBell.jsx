@@ -59,7 +59,7 @@ export default function NotificationBell() {
       await fetch("/api/notifications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ markAll: true }),
       });
       fetchNotifications();
     } catch (err) {
