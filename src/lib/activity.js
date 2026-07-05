@@ -28,7 +28,7 @@ const computeStreak = (activities) => {
     .filter(Boolean)
     .map((a) => {
       const d = new Date(a.activity_date || a.created_at);
-      return d.toISOString().split("T")[0];
+      return getLocalISODate(d);
     })
     .filter(Boolean)
     .sort((a, b) => new Date(b) - new Date(a));
@@ -40,7 +40,7 @@ const computeStreak = (activities) => {
   const today = getLocalISODate();
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split("T")[0];
+  const yesterdayStr = getLocalISODate(yesterday);
 
   // Only count streak if most recent activity is today or yesterday
   if (uniqueDates[0] !== today && uniqueDates[0] !== yesterdayStr) return 0;
