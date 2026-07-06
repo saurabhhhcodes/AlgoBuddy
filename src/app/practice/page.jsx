@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 
 import PracticeSidebar from "@/app/components/practice/PracticeSidebar";
-import PracticeSessionBanner from "@/app/components/practice/PracticeSessionBanner";
 import PracticeDashboard from "@/app/components/practice/PracticeDashboard";
 import PracticeNotebook from "@/app/components/practice/PracticeNotebook";
 import CompanyLogos from "@/app/components/practice/CompanyLogos";
@@ -663,22 +662,6 @@ export default function PracticePage() {
             </section>
           ) : activeView === "problem-list" ? (
             <>
-              {/* Top Row: Banner and Session Progress */}
-              <div className="flex flex-col lg:flex-row items-stretch gap-4">
-                <div className="flex-1">
-                  <PracticeSessionBanner 
-                    title="DSA Sheet - Most Important Interview Questions"
-                    description="All DSA topics covered – from basic to advanced. Perfect for interview preparation."
-                    difficulty="Beginner"
-                    problemCount={stats.total}
-                    duration={stats.estimatedTime}
-                    solved={stats.solved}
-                    attempted={stats.attempted}
-                    remaining={stats.remaining}
-                    total={stats.total}
-                  />
-                </div>
-              </div>
 
               {/* Tab navigation */}
               <div className="flex border-b border-slate-200 dark:border-neutral-800">
