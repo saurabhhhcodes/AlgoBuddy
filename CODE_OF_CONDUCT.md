@@ -66,3 +66,5 @@ This Code of Conduct applies within all project spaces, including:
 ## Attribution
 
 This Code of Conduct is inspired by the Contributor Covenant, version 2.1.
+
+# TODO: issue #2840
