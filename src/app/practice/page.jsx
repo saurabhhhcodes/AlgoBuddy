@@ -744,7 +744,6 @@ export default function PracticePage() {
                           <th className="py-4 px-5">Problem</th>
                           <th className="py-4 px-5">Topic</th>
                           <th className="py-4 px-5 text-center">Level</th>
-                          <th className="py-4 px-5 text-center">Time</th>
                           <th className="py-4 px-5 text-center">Company</th>
                           <th className="py-4 px-5 text-center">Status</th>
                           <th className="py-4 px-5 text-center w-12"></th>
@@ -796,9 +795,6 @@ export default function PracticePage() {
                                   }`}>
                                     {prob.difficulty}
                                   </span>
-                                </td>
-                                <td className="py-4 px-5 text-center text-xs font-bold text-slate-400 dark:text-neutral-500">
-                                  {prob.time}
                                 </td>
                                 <td className="py-4 px-5 text-center">
                                   <div className="flex justify-center">
