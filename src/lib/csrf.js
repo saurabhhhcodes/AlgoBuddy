@@ -16,7 +16,7 @@ export function generateCsrfToken() {
     .update(`${random}:${timestamp}`)
     .digest("hex");
 
-  return `${random}:${timestamp}:${hmac}`;
+  return `${random}.${timestamp}.${hmac}`;
 }
 
 export function validateCsrf(request) {
@@ -31,7 +31,7 @@ export function validateCsrf(request) {
     return false;
   }
 
-  const parts = cookieToken.split(":");
+  const parts = cookieToken.split(".");
 
   if (parts.length !== 3) {
     return false;

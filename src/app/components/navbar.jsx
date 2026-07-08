@@ -77,12 +77,21 @@ export default function Navbar() {
   );
   const displayName = user?.user_metadata?.name || "AlgoBuddy User";
 
+  // Theme is already applied by layout.jsx script before hydration
+  // Just read the current theme from document to sync state
   useEffect(() => {
     const currentTheme = getStoredTheme();
     setTheme(currentTheme);
-    applyTheme(currentTheme);
     setThemeMounted(true);
   }, []);
+
+  const toggleTheme = () => {
+    setTheme((currentTheme) => {
+      const nextTheme = currentTheme === "light" ? "dark" : "light";
+      applyTheme(nextTheme);
+      return nextTheme;
+    });
+  };
 
   const toggleTheme = () => {
     setTheme((currentTheme) => {
