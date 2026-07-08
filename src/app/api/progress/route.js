@@ -68,7 +68,7 @@ export async function POST(request) {
       );
     }
     const body = await request.json().catch(() => ({}));
-    const { problemId, status } = body;
+    const { problemId, status, localDate } = body;
 
     if (!problemId || !status) {
       return jsonResponse({ error: "problemId and status are required" }, 400);
@@ -97,8 +97,13 @@ export async function POST(request) {
     let currentStreak = 0;
     let longestStreak = 0;
     if (status === "Completed") {
+      let verifiedLocalDate = typeof localDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(localDate)
+        ? localDate
+        : new Date().toISOString().split("T")[0];
+
       const { data, error } = await supabase.rpc('increment_streak_on_completion', {
         p_user_id: authResult.user.id,
+        p_local_date: verifiedLocalDate
       });
       if (error) return jsonResponse({ error: error.message }, 500);
       currentStreak = data?.[0]?.current_streak ?? 0;

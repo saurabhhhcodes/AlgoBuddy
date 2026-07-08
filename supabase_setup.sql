@@ -156,7 +156,7 @@ CREATE POLICY "Authenticated users can insert comments" ON topic_comments FOR IN
 
 -- Atomic streak increment function (fixes TOCTOU race condition)
 -- ====================================================================
-CREATE OR REPLACE FUNCTION increment_streak_on_completion(p_user_id UUID)
+CREATE OR REPLACE FUNCTION increment_streak_on_completion(p_user_id UUID, p_local_date DATE DEFAULT NULL)
 RETURNS TABLE (current_streak INT, longest_streak INT)
 LANGUAGE plpgsql
 AS $$
@@ -164,8 +164,8 @@ DECLARE
   v_current INT;
   v_longest INT;
   v_last_active DATE;
-  v_today DATE := CURRENT_DATE;
-  v_yesterday DATE := CURRENT_DATE - 1;
+  v_today DATE := COALESCE(p_local_date, CURRENT_DATE);
+  v_yesterday DATE := COALESCE(p_local_date, CURRENT_DATE) - 1;
 BEGIN
   SELECT current_streak, longest_streak, last_active_date::DATE
   INTO v_current, v_longest, v_last_active
@@ -181,7 +181,12 @@ BEGIN
     RETURN;
   END IF;
 
-  IF v_last_active = v_yesterday THEN
+  IF v_last_active > v_today THEN
+    -- Out of order update (e.g., solving problem for a past day after solving one for today/future)
+    -- Do not reset or modify current_streak, longest_streak, or last_active_date.
+    RETURN QUERY SELECT v_current, v_longest;
+    RETURN;
+  ELSIF v_last_active = v_yesterday THEN
     v_current := v_current + 1;
     IF v_current > v_longest THEN
       v_longest := v_current;

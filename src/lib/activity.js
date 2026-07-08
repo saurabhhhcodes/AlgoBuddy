@@ -27,8 +27,11 @@ const computeStreak = (activities) => {
   const dates = activities
     .filter(Boolean)
     .map((a) => {
+      if (a.activity_date && /^\d{4}-\d{2}-\d{2}$/.test(a.activity_date)) {
+        return a.activity_date;
+      }
       const d = new Date(a.activity_date || a.created_at);
-      return d.toISOString().split("T")[0];
+      return getLocalISODate(d);
     })
     .filter(Boolean)
     .sort((a, b) => new Date(b) - new Date(a));
@@ -40,7 +43,7 @@ const computeStreak = (activities) => {
   const today = getLocalISODate();
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split("T")[0];
+  const yesterdayStr = getLocalISODate(yesterday);
 
   // Only count streak if most recent activity is today or yesterday
   if (uniqueDates[0] !== today && uniqueDates[0] !== yesterdayStr) return 0;
@@ -89,4 +92,4 @@ const getStreakData = async (userId, days = 30) => {
   }
 };
 
-export { trackActivity, getStreakData, computeStreak };
+export { trackActivity, getStreakData, computeStreak, getLocalISODate };
