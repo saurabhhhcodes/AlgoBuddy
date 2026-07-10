@@ -284,6 +284,34 @@ export default function CheatsheetDetail({ cheatsheet }) {
             </div>
           </SectionCard>
         </main>
+         <aside className="self-start lg:sticky lg:top-24 lg:w-1/5">
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800/70 dark:bg-slate-950/40">
+            <div>
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Table of Contents
+              </h2>
+              <nav className="space-y-2">
+                {[
+                  { label: "Overview", href: "#overview" },
+                  { label: "Complexity", href: "#complexity" },
+                  { label: "When to Use", href: "#when-to-use" },
+                  { label: "Common Mistakes", href: "#common-mistakes" },
+                  { label: "Code", href: "#code" },
+                  { label: "Algorithm Steps", href: "#steps" },
+                  { label: "Practice Problems", href: "#practice-problems" },
+                ].map((item) => (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    className="block rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 transition-colors hover:border-[#a435f0]/30 hover:text-[#7c2bd6] dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300"
+                  >
+                    {item.label}
+                  </a>
+                ))}
+              </nav>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   );
