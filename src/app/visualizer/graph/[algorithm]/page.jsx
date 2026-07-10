@@ -16,6 +16,7 @@ export async function generateStaticParams() {
     { algorithm: "tarjan" },
     { algorithm: "adjacency-list" },
     { algorithm: "adjacency-matrix" },
+    { algorithm: "a-star" },
   ];
 }
 

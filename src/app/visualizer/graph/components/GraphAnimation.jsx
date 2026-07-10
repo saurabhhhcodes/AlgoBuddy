@@ -6,7 +6,7 @@ import { useMemo, useRef, useState } from "react";
 import { Play, RotateCcw } from "lucide-react";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import { VisualizerCanvas } from "@/app/visualizer/components/VisualizerCanvas";
-import { aStarFrames } from "@/app/visualizer/graph/utils/algorithms";
+import { aStarGenerator } from "@/features/algorithms/graph/aStarLogic";
 
 const nodes = [
   { id: "A", x: 18, y: 32 },
@@ -39,12 +39,7 @@ const sequences = {
 };
 
 // Algorithms that only make sense on directed graphs
-const DIRECTED_ONLY = ["topological", "dijkstra", "bellman-ford"];
-  "a-star": ["A", "B", "E"],
-};
-
-// Algorithms that only make sense on directed graphs
-const DIRECTED_ONLY = ["topological", "dijkstra", "a-star"];
+const DIRECTED_ONLY = ["topological", "dijkstra", "bellman-ford", "a-star"];
 
 // Algorithms that only make sense on undirected graphs
 const UNDIRECTED_ONLY = ["prim", "kruskal"];
@@ -95,7 +90,7 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
   // A* frames computed from live start/goal selection
   const aStarData = useMemo(() => {
     if (type !== "a-star") return [];
-    return aStarFrames(nodes, edges, startNodeAStar, goalNode);
+    return Array.from(aStarGenerator(nodes, edges, startNodeAStar, goalNode));
   }, [type, startNodeAStar, goalNode]);
 
   const currentAStarFrame = type === "a-star"

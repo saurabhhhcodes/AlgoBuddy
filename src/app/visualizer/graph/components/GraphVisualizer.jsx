@@ -32,13 +32,14 @@ import { kruskalGenerator } from "@/features/algorithms/graph/kruskalLogic";
 import { topologicalSortGenerator } from "@/features/algorithms/graph/topologicalSortLogic";
 import { kosarajuGenerator } from "@/features/algorithms/graph/kosarajuLogic";
 import { tarjanGenerator } from "@/features/algorithms/graph/tarjanLogic";
+import { aStarGenerator } from "@/features/algorithms/graph/aStarLogic";
 import { 
   adjacencyListFrames,
   adjacencyMatrixFrames
 } from "../utils/algorithms";
 
-const weightedAlgorithms = new Set(["dijkstra", "bellman-ford", "floyd-warshall", "prim", "kruskal"]);
-const directedAlgorithms = new Set(["dijkstra", "bellman-ford", "floyd-warshall", "topological-sort", "kosaraju", "tarjan"]);
+const weightedAlgorithms = new Set(["dijkstra", "bellman-ford", "floyd-warshall", "prim", "kruskal", "a-star"]);
+const directedAlgorithms = new Set(["dijkstra", "bellman-ford", "floyd-warshall", "topological-sort", "kosaraju", "tarjan", "a-star"]);
 
 const defaultGraphs = {
   bfs: {
@@ -76,6 +77,28 @@ const defaultGraphs = {
     ]
   },
   dijkstra: {
+    nodes: [
+      { id: "0", x: 100, y: 250, label: "A" },
+      { id: "1", x: 300, y: 100, label: "B" },
+      { id: "2", x: 300, y: 400, label: "C" },
+      { id: "3", x: 500, y: 100, label: "D" },
+      { id: "4", x: 500, y: 400, label: "E" },
+      { id: "5", x: 700, y: 250, label: "F" },
+    ],
+    edges: [
+      { from: "0", to: "1", weight: 4, directed: true },
+      { from: "0", to: "2", weight: 2, directed: true },
+      { from: "1", to: "3", weight: 5, directed: true },
+      { from: "1", to: "2", weight: 1, directed: true },
+      { from: "2", to: "1", weight: 8, directed: true },
+      { from: "2", to: "3", weight: 10, directed: true },
+      { from: "2", to: "4", weight: 3, directed: true },
+      { from: "3", to: "5", weight: 2, directed: true },
+      { from: "4", to: "3", weight: 4, directed: true },
+      { from: "4", to: "5", weight: 6, directed: true },
+    ]
+  },
+  "a-star": {
     nodes: [
       { id: "0", x: 100, y: 250, label: "A" },
       { id: "1", x: 300, y: 100, label: "B" },
@@ -321,6 +344,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   const [nodes, setNodes] = useState(defaultGraphs[algorithm]?.nodes || []);
   const [edges, setEdges] = useState(defaultGraphs[algorithm]?.edges || []);
   const [isEditing, setIsEditing] = useState(true);
+  const [goalNodeId, setGoalNodeId] = useState(null);
 
   // Derived flags
   const isWeighted = weightedAlgorithms.has(algorithm);
@@ -340,9 +364,12 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     });
 
     const startNodeId = initialStartNode || (nodes.length > 0 ? nodes[0].id : null);
+    const finalGoalNodeId = goalNodeId || (nodes.length > 1 ? nodes[nodes.length - 1].id : null);
+    
     if (algorithm === "bfs") return Array.from(bfsGenerator(adj, startNodeId));
     if (algorithm === "dfs") return Array.from(dfsGenerator(adj, startNodeId));
     if (algorithm === "dijkstra") return Array.from(dijkstraGenerator(adj, startNodeId));
+    if (algorithm === "a-star") return Array.from(aStarGenerator(nodes, edges, startNodeId, finalGoalNodeId));
     if (algorithm === "bellman-ford") return Array.from(bellmanFordGenerator(nodes, edges, startNodeId));
     if (algorithm === "floyd-warshall") return Array.from(floydWarshallGenerator(nodes, edges));
     if (algorithm === "prim") return Array.from(primGenerator(adj, startNodeId));
@@ -533,6 +560,25 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
               <span className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
                 Directed
               </span>
+            )}
+
+            {/* A* Goal Node Selector */}
+            {algorithm === "a-star" && (
+              <div className="flex items-center gap-2 rounded-lg bg-surface-100 px-3 py-1 text-sm font-medium text-surface-600 dark:bg-surface-800 dark:text-surface-300">
+                <span>Goal Node:</span>
+                <select
+                  value={goalNodeId || ""}
+                  onChange={(e) => {
+                    setGoalNodeId(e.target.value);
+                    engine.reset();
+                  }}
+                  className="rounded border border-surface-200 bg-white px-2 py-0.5 text-sm text-surface-900 outline-none dark:border-surface-700 dark:bg-surface-900 dark:text-white"
+                >
+                  {nodes.map(n => (
+                    <option key={n.id} value={n.id}>{n.label}</option>
+                  ))}
+                </select>
+              </div>
             )}
 
             {!isEditing && (
