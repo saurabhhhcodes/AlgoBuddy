@@ -100,5 +100,5 @@ export default function useVisualizerKeyboard({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [enabled, onStart, onReset, onSpeedChange, onTogglePlayPause, onStepForward, speed, sorting, sorted]);
+  }, [enabled, onStart, onReset, onSpeedChange, onTogglePlayPause, onStepForward, onNextStep, onPrevStep, speed, sorting, sorted]);
 }
