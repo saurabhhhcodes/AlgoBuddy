@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
 import { api } from "@/lib/apiClient";
+import { getLocalISODate } from "@/lib/activity";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -89,13 +90,14 @@ async function fetchProgressFromServer() {
 
 /** Update a single problem's status */
 async function postProgressToServer(problemId, status) {
+  const localDate = getLocalISODate();
   if (isUsingSpringBoot()) {
     const headers = await getAuthHeader();
     if (!headers.Authorization) return;
     const res = await fetch(`${springBootBase()}/api/v1/practice/progress`, {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
-      body: JSON.stringify({ problemId, status }),
+      body: JSON.stringify({ problemId, status, localDate }),
     });
     if (!res.ok) return null;
     return await res.json();
@@ -105,7 +107,7 @@ async function postProgressToServer(problemId, status) {
   try {
     const fresh = await api.request("/api/progress", {
       method: "POST",
-      body: { problemId, status },
+      body: { problemId, status, localDate },
     });
     return fresh || null;
   } catch {

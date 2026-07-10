@@ -143,13 +143,38 @@ export default function PracticePage() {
     let hardSolved = 0;
     const uniqueCompanies = new Set();
 
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    let dailySolved = 0;
+    let weeklySolved = 0;
+    let monthlySolved = 0;
+
     allProblems.forEach((prob) => {
       const status = getStatus(prob.id);
+      const progInfo = progress[prob.id];
+      const updatedTimeStr = progInfo?.updatedAt || progInfo?.updated_at;
+
       if (status === "Completed") {
         solved++;
         if (prob.difficulty === "Easy") easySolved++;
         else if (prob.difficulty === "Medium") mediumSolved++;
         else if (prob.difficulty === "Hard") hardSolved++;
+
+        if (updatedTimeStr) {
+          const updatedDate = new Date(updatedTimeStr);
+          if (updatedDate >= startOfToday) {
+            dailySolved++;
+          }
+          if (updatedDate >= startOfWeek) {
+            weeklySolved++;
+          }
+          if (updatedDate >= startOfMonth) {
+            monthlySolved++;
+          }
+        }
       } else if (status === "In Progress") {
         attempted++;
       }
@@ -176,10 +201,9 @@ export default function PracticePage() {
 
     return {
       solved,
-      // Prefer server-computed time-window stats; fall back to 0
-      dailySolved: streakData.dailySolved || 0,
-      weeklySolved: streakData.weeklySolved || 0,
-      monthlySolved: streakData.monthlySolved || 0,
+      dailySolved: Math.max(dailySolved, streakData.dailySolved || 0),
+      weeklySolved: Math.max(weeklySolved, streakData.weeklySolved || 0),
+      monthlySolved: Math.max(monthlySolved, streakData.monthlySolved || 0),
       attempted,
       remaining,
       total: allProblems.length,
@@ -598,28 +622,7 @@ export default function PracticePage() {
                               </td>
                               <td className="py-4 px-5 text-center">
                                 <div className="flex justify-center"><CompanyLogos companies={prob.companies} /></div>
-                              </td>
-                              <td className="py-4 px-5 text-center">
-                                <div className="flex justify-center">
-                                  <button
-                                    onClick={() => handleStatusToggle(prob.id, status)}
-                                    className="focus:outline-none"
-                                    title={`Status: ${status}`}
-                                  >
-                                    {status === 'Completed' ? (
-                                      <div className="w-5 h-5 rounded-full border border-emerald-500 bg-emerald-500 flex items-center justify-center text-white">
-                                        <CheckCircle2 size={12} className="stroke-[3]" />
-                                      </div>
-                                    ) : status === 'In Progress' ? (
-                                      <div className="w-5 h-5 rounded-full border-2 border-amber-500 flex items-center justify-center">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                                      </div>
-                                    ) : (
-                                      <div className="w-5 h-5 rounded-full border-2 border-slate-200 dark:border-neutral-700 hover:border-primary transition" />
-                                    )}
-                                  </button>
-                                </div>
-                              </td>
+                              </td> 
                               <td className="py-4 px-5 text-center">
                                 <div className="flex items-center justify-center gap-2">
                                   <button
@@ -754,17 +757,14 @@ export default function PracticePage() {
                           <th className="py-4 px-5">Problem</th>
                           <th className="py-4 px-5">Topic</th>
                           <th className="py-4 px-5 text-center">Level</th>
-                          <th className="py-4 px-5 text-center">Time</th>
                           <th className="py-4 px-5 text-center">Company</th>
-                          <th className="py-4 px-5 text-center">Status</th>
                           <th className="py-4 px-5 text-center w-12"></th>
-                          <th className="py-4 px-5 text-center w-12" title="Add to My Sheet">Sheet</th>
                         </tr>
                       </thead>
                       <tbody>
                         {paginatedProblems.length === 0 ? (
                           <tr>
-                            <td colSpan="8" className="py-8 text-center text-xs font-bold text-slate-400 dark:text-neutral-600">
+                            <td colSpan="6" className="py-8 text-center text-xs font-bold text-slate-400 dark:text-neutral-600">
                               No matching problems found.
                             </td>
                           </tr>
@@ -807,33 +807,9 @@ export default function PracticePage() {
                                     {prob.difficulty}
                                   </span>
                                 </td>
-                                <td className="py-4 px-5 text-center text-xs font-bold text-slate-400 dark:text-neutral-500">
-                                  {prob.time}
-                                </td>
                                 <td className="py-4 px-5 text-center">
                                   <div className="flex justify-center">
                                     <CompanyLogos companies={prob.companies} />
-                                  </div>
-                                </td>
-                                <td className="py-4 px-5 text-center">
-                                  <div className="flex justify-center">
-                                    <button
-                                      onClick={() => handleStatusToggle(prob.id, status)}
-                                      className="focus:outline-none focus-ring rounded-full"
-                                      title={`Click to toggle status: currently ${status}`}
-                                    >
-                                      {status === "Completed" ? (
-                                        <div className="w-5 h-5 rounded-full border border-emerald-500 bg-emerald-500 flex items-center justify-center text-white scale-105 transition">
-                                          <CheckCircle2 size={12} className="stroke-[3]" />
-                                        </div>
-                                      ) : status === "In Progress" ? (
-                                        <div className="w-5 h-5 rounded-full border-2 border-amber-500 flex items-center justify-center scale-105 transition">
-                                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                                        </div>
-                                      ) : (
-                                        <div className="w-5 h-5 rounded-full border-2 border-slate-200 dark:border-neutral-700 hover:border-primary transition" />
-                                      )}
-                                    </button>
                                   </div>
                                 </td>
                                 <td className="py-4 px-5 text-center">
@@ -851,28 +827,7 @@ export default function PracticePage() {
                                     <Bookmark size={14} className={isSaved ? "fill-primary dark:fill-purple-400" : ""} />
                                   </button>
                                 </td>
-                                <td className="py-4 px-5 text-center">
-                                  <button
-                                    onClick={() => {
-                                      if (!ensureLoggedIn()) return;
-                                      if (isInSheet(prob.id)) {
-                                        removeFromSheet(prob.id);
-                                        toast.success('Removed from My Sheet');
-                                      } else {
-                                        addToSheet(prob.id);
-                                        toast.success('Added to My Sheet! ✨');
-                                      }
-                                    }}
-                                    title={isInSheet(prob.id) ? 'Remove from My Sheet' : 'Add to My Sheet'}
-                                    className={`focus:outline-none p-1.5 rounded-lg transition ${
-                                      isInSheet(prob.id)
-                                        ? 'text-purple-500 bg-purple-500/10 dark:text-purple-400'
-                                        : 'text-slate-300 dark:text-neutral-700 hover:text-purple-500 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/20'
-                                    }`}
-                                  >
-                                    <ScrollText size={14} />
-                                  </button>
-                                </td>
+
                               </tr>
                             );
                           })
@@ -887,24 +842,6 @@ export default function PracticePage() {
                       Showing {filteredProblems.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to{" "}
                       {Math.min(currentPage * itemsPerPage, filteredProblems.length)} of {filteredProblems.length} problems
                     </span>
-
-                    {/* Legend circles */}
-                    <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 dark:text-neutral-500">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full border-2 border-slate-200 dark:border-neutral-750" />
-                        <span>Not Solved</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full border-2 border-amber-500 flex items-center justify-center">
-                          <div className="w-1 h-1 rounded-full bg-amber-500" />
-                        </div>
-                        <span>Attempted</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                        <span>Solved</span>
-                      </div>
-                    </div>
 
                     {/* Shuffle / Random & Pagination controls */}
                     <div className="flex items-center gap-3">
@@ -1280,7 +1217,7 @@ export default function PracticePage() {
                               <th className="py-4 px-5 text-center">Company</th>
                               <th className="py-4 px-5 text-center">Status</th>
                               <th className="py-4 px-5 text-center w-12"></th>
-                              <th className="py-4 px-5 text-center w-12" title="Add to My Sheet">Sheet</th>
+                              
                             </tr>
                           </thead>
                           <tbody>
@@ -1346,28 +1283,6 @@ export default function PracticePage() {
                                       }`}
                                     >
                                       <Bookmark size={14} className={isSaved ? "fill-primary dark:fill-purple-400" : ""} />
-                                    </button>
-                                  </td>
-                                  <td className="py-4 px-5 text-center">
-                                    <button
-                                      onClick={() => {
-                                        if (!ensureLoggedIn()) return;
-                                        if (isInSheet(prob.id)) {
-                                          removeFromSheet(prob.id);
-                                          toast.success('Removed from My Sheet');
-                                        } else {
-                                          addToSheet(prob.id);
-                                          toast.success('Added to My Sheet! ✨');
-                                        }
-                                      }}
-                                      title={isInSheet(prob.id) ? 'Remove from My Sheet' : 'Add to My Sheet'}
-                                      className={`focus:outline-none p-1.5 rounded-lg transition ${
-                                        isInSheet(prob.id)
-                                          ? 'text-purple-500 bg-purple-500/10 dark:text-purple-400'
-                                          : 'text-slate-300 dark:text-neutral-700 hover:text-purple-500 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/20'
-                                      }`}
-                                    >
-                                      <ScrollText size={14} />
                                     </button>
                                   </td>
                                 </tr>
