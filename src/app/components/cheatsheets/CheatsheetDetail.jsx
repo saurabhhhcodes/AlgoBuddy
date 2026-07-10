@@ -39,7 +39,6 @@ function getPracticeProblems(id) {
   return practiceProblemsById[id] || practiceProblemsById.default;
 }
 
-
 function SectionCard({ id, title, children, tone = "slate" }) {
   const toneClasses =
     tone === "success"
@@ -97,7 +96,6 @@ export default function CheatsheetDetail({ cheatsheet }) {
     cheatsheet.overview ||
     `${title} is a quick-reference guide for solving problems with the ${title.toLowerCase()} pattern.`;
   const practiceProblems = getPracticeProblems(id);
-
 
   return (
     <div className="mx-auto max-w-7xl" id="cheatsheet-content">
@@ -259,6 +257,22 @@ export default function CheatsheetDetail({ cheatsheet }) {
               </div>
             </SectionCard>
           )}
+
+          {steps && steps.length > 0 && (
+            <SectionCard id="steps" title="Algorithm Steps">
+              <ol className="space-y-3">
+                {steps.map((step, index) => (
+                  <li key={step} className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-400">
+                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#a435f0]/10 text-xs font-bold text-[#7c2bd6] dark:text-[#d8b4fe]">
+                      {index + 1}
+                    </span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ol>
+            </SectionCard>
+          )}
+
           <SectionCard id="practice-problems" title="Practice Problems">
             <div className="grid gap-4 md:grid-cols-3">
               {Object.entries({
@@ -284,7 +298,8 @@ export default function CheatsheetDetail({ cheatsheet }) {
             </div>
           </SectionCard>
         </main>
-         <aside className="self-start lg:sticky lg:top-24 lg:w-1/5">
+
+        <aside className="self-start lg:sticky lg:top-24 lg:w-1/5">
           <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800/70 dark:bg-slate-950/40">
             <div>
               <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -310,6 +325,7 @@ export default function CheatsheetDetail({ cheatsheet }) {
                 ))}
               </nav>
             </div>
+
             <div>
               <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Quick Actions
@@ -334,7 +350,7 @@ export default function CheatsheetDetail({ cheatsheet }) {
                   Practice Problems
                 </button>
               </div>
-            </div>  
+            </div>
           </div>
         </aside>
       </div>
