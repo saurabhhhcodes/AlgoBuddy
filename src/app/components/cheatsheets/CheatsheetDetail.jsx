@@ -298,8 +298,7 @@ export default function CheatsheetDetail({ cheatsheet }) {
             </div>
           </SectionCard>
         </main>
-
-        <aside className="self-start lg:sticky lg:top-24 lg:w-1/5">
+         <aside className="self-start lg:sticky lg:top-24 lg:w-1/5">
           <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800/70 dark:bg-slate-950/40">
             <div>
               <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
