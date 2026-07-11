@@ -777,21 +777,17 @@ export default function PracticePage() {
                             return (
                               <tr
                                 key={prob.id}
-                                className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0"
+                                onClick={() => window.open(prob.practiceUrl, '_blank', 'noopener,noreferrer')}
+                                className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0 cursor-pointer"
                               >
                                 <td className="py-4 px-5 text-center font-bold text-xs text-slate-400">
                                   {indexNumber}
                                 </td>
                                 <td className="py-4 px-5">
-                                  <a
-                                    href={prob.practiceUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="font-bold text-xs text-slate-800 dark:text-white hover:text-primary dark:hover:text-purple-400 hover:underline inline-flex items-center gap-1 transition"
-                                  >
+                                  <span className="font-bold text-xs text-slate-800 dark:text-white hover:text-primary dark:hover:text-purple-400 inline-flex items-center gap-1 transition">
                                     <span>{prob.name}</span>
                                     <ExternalLink size={12} className="opacity-50 shrink-0" />
-                                  </a>
+                                  </span>
                                 </td>
                                 <td className="py-4 px-5 text-xs font-bold text-slate-500 dark:text-neutral-400">
                                   {prob.topic}
@@ -812,7 +808,7 @@ export default function PracticePage() {
                                     <CompanyLogos companies={prob.companies} />
                                   </div>
                                 </td>
-                                <td className="py-4 px-5 text-center">
+                                <td className="py-4 px-5 text-center" onClick={(e) => e.stopPropagation()}>
                                   <button
                                     onClick={() => {
                                       if (!ensureLoggedIn()) return;
