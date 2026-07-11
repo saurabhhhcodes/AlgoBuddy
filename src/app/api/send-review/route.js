@@ -7,6 +7,20 @@ import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from "@/lib/csrfConstants";
 import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
 import { escapeHtml } from "@/lib/shared-utils";
 
+let _transporter = null;
+
+function getTransporter() {
+  if (_transporter) return _transporter;
+  _transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+  });
+  return _transporter;
+}
+
 function isValidEmail(value) {
   const email = String(value).trim();
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -102,13 +116,7 @@ export async function POST(request) {
 
     const inboxEmail = process.env.REVIEW_INBOX_EMAIL || process.env.EMAIL_USER;
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
+    const transporter = getTransporter();
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
