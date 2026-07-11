@@ -265,6 +265,10 @@ export default function CompanyLogos({ companies = [] }) {
     <>
       <div
         onClick={() => setIsModalOpen(true)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsModalOpen(true); } }}
+        role="button"
+        tabIndex={0}
+        aria-label="View all companies asking this problem"
         className="flex items-center justify-center -space-x-2 select-none relative group/container cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all"
         title="Click to view all asking companies"
       >
@@ -318,6 +322,9 @@ export default function CompanyLogos({ companies = [] }) {
       {/* Interactive Companies List Modal */}
       {isModalOpen && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Companies asking this problem"
           className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4 transition-all duration-300 animate-in fade-in"
           onClick={() => setIsModalOpen(false)}
         >
@@ -333,6 +340,7 @@ export default function CompanyLogos({ companies = [] }) {
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
+                aria-label="Close companies modal"
                 className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-50 hover:bg-surface-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 transition-colors text-surface-500 dark:text-neutral-300"
               >
                 <X size={16} />
