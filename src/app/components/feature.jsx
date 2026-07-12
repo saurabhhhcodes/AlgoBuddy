@@ -76,9 +76,9 @@ const FeaturesSection = () => {
 
         {/* Desktop Grid */}
         <div className="hidden md:grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
+          {features.map((feature) => (
             <div
-              key={index}
+              key={feature.title}
               className="relative group bg-white dark:bg-udemy-dark-surface rounded-xl p-8 shadow-sm hover:shadow-lg transition-all duration-300 border border-udemy-border dark:border-udemy-dark-border"
             >
               {/* Hover effect background */}
@@ -108,8 +108,8 @@ const FeaturesSection = () => {
                   </p>
 
                   <ul className="space-y-3 mt-4">
-                    {feature.benefits.map((benefit, i) => (
-                      <li key={i} className="flex items-start gap-3">
+                    {feature.benefits.map((benefit) => (
+                      <li key={benefit} className="flex items-start gap-3">
                         <div
                           className={`flex-shrink-0 mt-1 w-5 h-5 ${feature.color} rounded-full flex items-center justify-center bg-purple-100 dark:bg-udemy-purple/20`}
                         >
@@ -144,8 +144,8 @@ const FeaturesSection = () => {
             className="flex transition-transform duration-300 ease-in-out"
             style={{ transform: `translateX(-${currentSlide * 100}%)` }}
           >
-            {features.map((feature, index) => (
-              <div key={index} className="w-full flex-shrink-0 px-2">
+            {features.map((feature) => (
+              <div key={feature.title} className="w-full flex-shrink-0 px-2">
                 <div className="bg-white dark:bg-udemy-dark-surface rounded-xl p-6 shadow-sm border border-udemy-border dark:border-udemy-dark-border">
                   {/* Icon */}
                   <div
@@ -170,8 +170,8 @@ const FeaturesSection = () => {
                     </p>
 
                     <ul className="space-y-3 mt-4">
-                      {feature.benefits.map((benefit, i) => (
-                        <li key={i} className="flex items-start gap-3">
+                      {feature.benefits.map((benefit) => (
+                        <li key={benefit} className="flex items-start gap-3">
                           <div
                             className={`flex-shrink-0 mt-1 w-5 h-5 ${feature.color} rounded-full flex items-center justify-center bg-purple-100 dark:bg-udemy-purple/20`}
                           >

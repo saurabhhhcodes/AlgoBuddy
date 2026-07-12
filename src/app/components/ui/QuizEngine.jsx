@@ -212,7 +212,7 @@ export default function QuizEngine({ title, questions }) {
                   const isSelected = selectedAnswer === index;
                   return (
                     <motion.div
-                      key={index}
+                      key={`${index}-${option}`}
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.99 }}
                       className={`p-4 border rounded-xl cursor-pointer transition-all duration-200 ${isSelected
@@ -305,7 +305,7 @@ export default function QuizEngine({ title, questions }) {
               {questions.map((q, index) => {
                 const isCorrect = answers[index] === q.correctAnswer;
                 return (
-                  <div key={index} className="border-b last:border-0 pb-4 border-[#e5e7eb] dark:border-[#333] last:pb-0">
+                  <div key={q.question} className="border-b last:border-0 pb-4 border-[#e5e7eb] dark:border-[#333] last:pb-0">
                     <p className="font-extrabold text-[14px] text-surface-900 dark:text-white mb-2 leading-relaxed">
                       {index + 1}. {q.question}
                     </p>

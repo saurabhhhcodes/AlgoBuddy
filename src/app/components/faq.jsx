@@ -199,7 +199,7 @@ const FAQSection = () => {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      key={index}
+                      key={faq.question}
                       className={`bg-white dark:bg-udemy-dark-surface border border-udemy-border dark:border-udemy-dark-border rounded-2xl overflow-hidden transition-all duration-300 ${activeIndex === index
                           ? "shadow-md ring-1 ring-udemy-purple/20"
                           : "shadow-sm hover:shadow-md hover:border-udemy-purple/30 dark:hover:border-udemy-purple/50"
@@ -255,8 +255,8 @@ const FAQSection = () => {
           {/* Quick Stats Section */}
           <div className="max-w-6xl mx-auto mt-24">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-8">
-              {stats.map((stat, i) => (
-                <div key={i} className="bg-white/50 dark:bg-udemy-dark-surface/50 backdrop-blur-sm border border-udemy-border dark:border-udemy-dark-border rounded-2xl p-6 text-center hover:bg-white dark:hover:bg-udemy-dark-surface transition-colors">
+              {stats.map((stat) => (
+                <div key={stat.label} className="bg-white/50 dark:bg-udemy-dark-surface/50 backdrop-blur-sm border border-udemy-border dark:border-udemy-dark-border rounded-2xl p-6 text-center hover:bg-white dark:hover:bg-udemy-dark-surface transition-colors">
                   <div className="w-12 h-12 mx-auto bg-udemy-purple/10 dark:bg-udemy-purple/20 rounded-xl flex items-center justify-center text-udemy-purple dark:text-udemy-purple-light mb-4">
                     <stat.icon className="w-6 h-6" />
                   </div>
