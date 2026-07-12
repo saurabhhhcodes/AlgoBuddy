@@ -1,24 +1,33 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Copy, Check, Link2, Play } from "lucide-react";
 import { generateSecureCode } from "@/lib/random";
 
 export default function CreateDuelModal({ isOpen, onClose, onCreateMatch, initialTopic, initialDifficulty, initialTimeLimit, initialWager, initialMode, initialPublic }) {
   const [lobbyCode, setLobbyCode] = useState("");
-  
+  const copyTimeoutRef = useRef(null);
+  const [copied, setCopied] = useState(false);
+
   useEffect(() => {
     if (isOpen) {
       setLobbyCode(generateSecureCode(6));
     }
   }, [isOpen]);
-  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(`https://algobuddy.me/arena/duel/${lobbyCode}`);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
     } catch {}
   };
 
