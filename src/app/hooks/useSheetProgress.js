@@ -205,6 +205,12 @@ export function useSheetProgress() {
   // Track whether we've done the initial server sync to avoid double-syncing
   const syncedRef = useRef(false);
 
+  // Track latest committed state via refs to avoid stale closure captures
+  const progressRef = useRef(progress);
+  const streakDataRef = useRef(streakData);
+  useEffect(() => { progressRef.current = progress; }, [progress]);
+  useEffect(() => { streakDataRef.current = streakData; }, [streakData]);
+
   // Version counter to prevent race conditions during rapid progress updates
   const updateVersionRef = useRef(0);
 
@@ -318,7 +324,7 @@ export function useSheetProgress() {
     async (problemId, newStatus) => {
       const updatedAt = new Date().toISOString();
       const myVersion = ++updateVersionRef.current;
-      const previousProgress = progress;
+      const previousProgress = progressRef.current;
 
       // Update local state immediately so UI reflects the change right away.
       // Use a functional update to avoid stale `progress` closure issues.
@@ -335,7 +341,7 @@ export function useSheetProgress() {
       // Authenticated users get their streak from the server after the sync
       // below, so updating localStorage here would cause divergence.
       if (newStatus === "Completed" && !user) {
-        const next = updateLocalStreak(streakData.current);
+        const next = updateLocalStreak(streakDataRef.current);
         setStreakData((prev) => ({
           ...prev,
           current: next,
