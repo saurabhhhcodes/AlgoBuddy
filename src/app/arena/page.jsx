@@ -1421,7 +1421,36 @@ export default function ArenaPage() {
                     </div>
 
                     {/* Content Placeholder */}
-                    {tournamentFilter === "Upcoming" ? (
+                    {tournamentFilter === "Live" ? (
+                      <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-base font-bold text-slate-800 dark:text-neutral-200">Current Live Standings</h3>
+                          <span className="px-2 py-1 rounded bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest animate-pulse">
+                            Live
+                          </span>
+                        </div>
+                        <div className="space-y-2">
+                          {[
+                            { rank: 1, name: "Alex Chen", score: 400, time: "45:12" },
+                            { rank: 2, name: "Sarah J.", score: 380, time: "48:05" },
+                            { rank: 3, name: "Mike T.", score: 350, time: "52:10" },
+                            { rank: 4, name: "You", score: 200, time: "15:00", isYou: true },
+                            { rank: 5, name: "David K.", score: 180, time: "18:20" },
+                          ].map((player) => (
+                            <div key={player.rank} className={`flex items-center justify-between p-3 rounded-xl border ${player.isYou ? 'bg-primary/5 border-primary/30' : 'bg-slate-50 dark:bg-neutral-900/50 border-slate-100 dark:border-neutral-800'}`}>
+                              <div className="flex items-center gap-4">
+                                <span className={`w-6 text-center font-black ${player.rank === 1 ? 'text-amber-500' : player.rank === 2 ? 'text-slate-400' : player.rank === 3 ? 'text-orange-700' : 'text-slate-500'}`}>#{player.rank}</span>
+                                <span className={`font-bold ${player.isYou ? 'text-primary' : 'text-slate-700 dark:text-neutral-200'}`}>{player.name}</span>
+                              </div>
+                              <div className="flex items-center gap-6 text-sm font-semibold">
+                                <span className="text-slate-500 dark:text-neutral-400">{player.time}</span>
+                                <span className="w-12 text-right text-slate-800 dark:text-neutral-100">{player.score} pts</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : tournamentFilter === "Upcoming" ? (
                       <div className="space-y-4">
                         <TournamentCard tournament={{
                           title: "AlgoBuddy Weekly Cup",
@@ -1450,10 +1479,10 @@ export default function ArenaPage() {
                       <div className="py-8 text-center bg-slate-50 dark:bg-neutral-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-neutral-800">
                         <Trophy size={48} className="mx-auto text-slate-300 dark:text-neutral-600 mb-4" />
                         <h3 className="text-lg font-bold text-slate-800 dark:text-neutral-200">
-                          {tournamentFilter === "Live" ? "No Active Tournaments" : "Past Results"}
+                          Past Results
                         </h3>
                         <p className="text-sm text-slate-500 dark:text-neutral-400 mt-2">
-                          {tournamentFilter === "Live" ? "Check back later for live action." : "Historical tournament results will appear here."}
+                          Historical tournament results will appear here.
                         </p>
                       </div>
                     )}
