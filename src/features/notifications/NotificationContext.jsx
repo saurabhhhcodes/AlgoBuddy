@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { useUser } from "@/features/user/UserContext";
 import { useSheetProgress } from "@/app/hooks/useSheetProgress";
 import { api } from "@/lib/apiClient";
@@ -39,6 +39,8 @@ export const NotificationProvider = ({ children }) => {
   const { user } = useUser();
   const { streakData, progress } = useSheetProgress();
   const [notifications, setNotifications] = useState([]);
+  const notificationsRef = useRef(notifications);
+  useEffect(() => { notificationsRef.current = notifications; }, [notifications]);
   const [mounted, setMounted] = useState(false);
 
   const addNotification = useCallback((notification) => {
@@ -173,7 +175,7 @@ export const NotificationProvider = ({ children }) => {
 
   const markAllAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    const jobNotifIds = notifications
+    const jobNotifIds = notificationsRef.current
       .filter(n => n.id.startsWith("job-") && !n.read)
       .map(n => n.id.replace("job-", ""));
     if (jobNotifIds.length > 0) {
