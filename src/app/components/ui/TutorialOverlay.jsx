@@ -15,16 +15,19 @@ export default function TutorialOverlay() {
 
   useEffect(() => {
     const seenTutorial = localStorage.getItem("tutorialSeen");
-
     if (!seenTutorial) {
       setShowOverlay(true);
-      gsap.fromTo(
-        overlayRef.current,
-        { opacity: 0 },
-        { opacity: 1, duration: 0.5, ease: "power2.out" },
-      );
     }
   }, []);
+
+  useEffect(() => {
+    if (!showOverlay) return;
+    gsap.fromTo(
+      overlayRef.current,
+      { opacity: 0 },
+      { opacity: 1, duration: 0.5, ease: "power2.out" },
+    );
+  }, [showOverlay]);
 
   const nextStep = () => {
     if (step < 2) {
