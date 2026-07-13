@@ -69,8 +69,20 @@ export async function proxy(request) {
     requestHeaders.set('x-user-email', user.email || '');
   }
 
+  // Preserve the response that may have Supabase session cookies set
+  // during getUser() via the setAll() callback. Creating a new response below
+  // without these cookies would silently log users out on session refresh.
+  const prevResponse = supabaseResponse;
   supabaseResponse = NextResponse.next({
     request: { headers: requestHeaders },
+  });
+
+  // Copy Set-Cookie headers from the previous response (set by Supabase's setAll)
+  // so that session refresh cookies reach the browser.
+  prevResponse.headers.forEach((value, key) => {
+    if (key.toLowerCase() === 'set-cookie') {
+      supabaseResponse.headers.append('Set-Cookie', value);
+    }
   });
 
   const pathname = request.nextUrl.pathname;

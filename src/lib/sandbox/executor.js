@@ -8,7 +8,9 @@ function sanitizeError(err) {
   
   // Remove file paths from error messages
   message = message.replace(/[a-zA-Z]:\\[^\\]*/g, "[path]");
-  message = message.replace(/\/[^\/]*/g, "[path]");
+  // Match Unix absolute paths with at least 2 path segments to avoid
+  // corrupting legitimate error content (e.g. "Unexpected token /", "10/0").
+  message = message.replace(/(?:\/[A-Za-z0-9_.-]+){2,}/g, "[path]");
   
   // Remove internal implementation details
   message = message.replace(/vm:\d+:\d+/g, "[internal]");

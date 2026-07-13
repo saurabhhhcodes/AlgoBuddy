@@ -4,6 +4,7 @@
  */
 
 const precedence = { "^": 4, "*": 3, "/": 3, "+": 2, "-": 2 };
+const rightAssociative = new Set(["^"]);
 
 export function* postfixGenerator(infix) {
   let tempStack = [];
@@ -29,7 +30,7 @@ export function* postfixGenerator(infix) {
       tempStack.pop(); // Remove "("
       yield { stack:[...tempStack], output:[...tempOutput], char:"(", action:"Remove from stack", description:'Removed "(" from stack' };
     } else {
-      while (tempStack.length && tempStack[tempStack.length - 1] !== "(" && precedence[char] <= precedence[tempStack[tempStack.length - 1]]) {
+      while (tempStack.length && tempStack[tempStack.length - 1] !== "(" && (rightAssociative.has(char) ? precedence[char] < precedence[tempStack[tempStack.length - 1]] : precedence[char] <= precedence[tempStack[tempStack.length - 1]])) {
         const popped = tempStack.pop();
         tempOutput.push(popped);
         yield { stack:[...tempStack], output:[...tempOutput], char:popped, action:"Pop higher precedence", description:`Popped higher precedence operator "${popped}"` };

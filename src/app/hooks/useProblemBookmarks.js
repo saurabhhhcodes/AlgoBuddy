@@ -102,41 +102,38 @@ export function useProblemBookmarks() {
   const toggleBookmark = async (problemId, topicSlug) => {
     if (!problemId || !topicSlug) return;
 
-    const isBookmarkedCurrently = bookmarks.some((b) => b.id === problemId);
+    setBookmarks((prev) => {
+      const isCurrentlyBookmarked = prev.some((b) => b.id === problemId);
 
-    if (isBookmarkedCurrently) {
-      const updated = bookmarks.filter((b) => b.id !== problemId);
-      setBookmarks(updated);
-      persistence.set("PROBLEM_BOOKMARKS", updated);
+      if (isCurrentlyBookmarked) {
+        const updated = prev.filter((b) => b.id !== problemId);
+        persistence.set("PROBLEM_BOOKMARKS", updated);
 
-      if (user) {
-        try {
-          await apiFetch(`/api/bookmarks?problemId=${encodeURIComponent(problemId)}`, { method: "DELETE" });
-          toast.success("Bookmark removed.");
-        } catch (e) {
-          console.error("Failed to delete bookmark:", e);
+        if (user) {
+          apiFetch(`/api/bookmarks?problemId=${encodeURIComponent(problemId)}`, { method: "DELETE" })
+            .then(() => toast.success("Bookmark removed."))
+            .catch((e) => console.error("Failed to delete bookmark:", e));
+        } else {
+          toast.success("Bookmark removed (local).");
         }
-      } else {
-        toast.success("Bookmark removed (local).");
-      }
-    } else {
-      const newBookmark = { id: problemId, topicSlug, createdAt: new Date().toISOString() };
-      const updated = [...bookmarks, newBookmark];
-      setBookmarks(updated);
-      persistence.set("PROBLEM_BOOKMARKS", updated);
 
-      if (user) {
-        try {
-          await apiFetch("/api/bookmarks", {
+        return updated;
+      } else {
+        const newBookmark = { id: problemId, topicSlug, createdAt: new Date().toISOString() };
+        const updated = [...prev, newBookmark];
+        persistence.set("PROBLEM_BOOKMARKS", updated);
+
+        if (user) {
+          apiFetch("/api/bookmarks", {
             method: "POST",
             body: { problemId, topicSlug },
-          });
-          toast.success("Problem bookmarked successfully!");
-        } catch (e) {
-          console.error("Failed to save bookmark:", e);
-          toast.error("Error syncing bookmark.");
-        }
-      } else {
+          })
+            .then(() => toast.success("Problem bookmarked successfully!"))
+            .catch((e) => {
+              console.error("Failed to save bookmark:", e);
+              toast.error("Error syncing bookmark.");
+            });
+        } else {
         toast.custom((t) => (
           <div className="max-w-sm w-full bg-neutral-100 dark:bg-zinc-800 border border-[#a435f0] rounded-lg shadow-xl p-4 flex flex-col gap-2">
             <div className="flex flex-col gap-1">
@@ -162,6 +159,8 @@ export function useProblemBookmarks() {
           </div>
         ));
       }
+
+        return updated;
     }
   };
 

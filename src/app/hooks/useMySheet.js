@@ -189,29 +189,33 @@ export function useMySheet() {
   const addToSheet = useCallback(
     async (problemId, note = "") => {
       const addedAt = new Date().toISOString();
-      const next = { ...sheet, [problemId]: { addedAt, note } };
-      setSheet(next);
-      writeLocal(next);
+      setSheet((prev) => {
+        const next = { ...prev, [problemId]: { addedAt, note } };
+        writeLocal(next);
+        return next;
+      });
 
       if (user) {
         addToSheetOnServer(problemId, note).catch(() => {});
       }
     },
-    [sheet, user]
+    [user]
   );
 
   const removeFromSheet = useCallback(
     async (problemId) => {
-      const next = { ...sheet };
-      delete next[problemId];
-      setSheet(next);
-      writeLocal(next);
+      setSheet((prev) => {
+        const next = { ...prev };
+        delete next[problemId];
+        writeLocal(next);
+        return next;
+      });
 
       if (user) {
         removeFromSheetOnServer(problemId).catch(() => {});
       }
     },
-    [sheet, user]
+    [user]
   );
 
   const isInSheet = useCallback(

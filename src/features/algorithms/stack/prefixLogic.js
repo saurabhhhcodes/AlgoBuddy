@@ -8,6 +8,7 @@ export function generateInfixToPrefixSteps(infix) {
   }
 
   const precedence = { "^": 4, "*": 3, "/": 3, "+": 2, "-": 2 };
+  const leftAssociative = new Set(["+", "-", "*", "/"]);
   const conversionSteps = [];
   let tempStack = [];
   let tempOutput = [];
@@ -76,7 +77,7 @@ export function generateInfixToPrefixSteps(infix) {
       while (
         tempStack.length &&
         tempStack[tempStack.length - 1] !== "(" &&
-        precedence[ch] <= precedence[tempStack[tempStack.length - 1]]
+        (leftAssociative.has(ch) ? precedence[ch] < precedence[tempStack[tempStack.length - 1]] : precedence[ch] <= precedence[tempStack[tempStack.length - 1]])
       ) {
         const popped = tempStack.pop();
         tempOutput.push(popped);

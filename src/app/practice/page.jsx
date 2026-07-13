@@ -1332,7 +1332,7 @@ export default function PracticePage() {
                                     <div className="relative flex justify-center group">
                                       <button
                                         onClick={(e) =>{
-                                          s.stopPropagation();
+                                          e.stopPropagation();
                                           handleStatusToggle(prob.id, status)
                                         } }
                                         className="focus:outline-none"
