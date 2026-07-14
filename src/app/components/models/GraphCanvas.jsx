@@ -39,15 +39,20 @@ function EdgeWeightLabel({ x1, y1, x2, y2, weight, onWeightChange, readOnlyLabel
   const my = (y1 + y2) / 2;
 
   if (readOnlyLabel !== undefined) {
+    const labelStr = String(readOnlyLabel);
+    const width = Math.max(24, labelStr.length * 8 + 12);
     return (
-      <text
-        x={mx}
-        y={my - 8}
-        textAnchor="middle"
-        className="fill-yellow-500 text-[10px] font-bold pointer-events-none"
+      <foreignObject
+        x={mx - width / 2}
+        y={my - 12}
+        width={width}
+        height={20}
+        className="pointer-events-none"
       >
-        {readOnlyLabel}
-      </text>
+        <div className="flex h-full w-full items-center justify-center rounded-full bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700 text-[10px] font-bold text-yellow-600 dark:text-yellow-500 shadow-sm backdrop-blur-sm">
+          {labelStr}
+        </div>
+      </foreignObject>
     );
   }
 
