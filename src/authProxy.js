@@ -8,35 +8,12 @@ import {
   CSRF_HEADER_NAME,
 } from "@/lib/csrfConstants";
 import { validateCsrfTokenEdge } from "@/lib/csrfToken";
+import { getSupabaseConfig } from "@/lib/shared-utils";
 
 const SUPABASE_ENV_ERROR =
   "Missing NEXT_PUBLIC_SUPABASE_URL and/or NEXT_PUBLIC_SUPABASE_ANON_KEY. Copy .env.example to .env.local and add your Supabase project URL and anon key.";
 
 const CSRF_EXEMPT_ROUTES = new Set(["/api/csrf-token"]);
-
-function isValidHttpUrl(value) {
-  try {
-    const parsed = new URL(value);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
-function getSupabaseConfig() {
-  let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey || !isValidHttpUrl(supabaseUrl)) {
-    return null;
-  }
-
-  if (supabaseUrl.startsWith("http://localhost:")) {
-    supabaseUrl = supabaseUrl.replace("http://localhost:", "http://127.0.0.1:");
-  }
-
-  return { supabaseUrl, supabaseAnonKey };
-}
 
 const protectedRoutes = ["/arena", "/practice", "/profile"];
 
@@ -77,21 +54,23 @@ export async function proxy(request) {
   );
 
   const { data: { user }, error } = await supabase.auth.getUser();
-const requestHeaders = new Headers(request.headers);
-
 // Forward the verified user to route handlers so they can skip
 // a redundant getUser() call, cutting auth latency in half.
-if (user) {
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-user-id", user.id);
-  requestHeaders.set("x-user-email", user.email || "");
+const requestHeaders = new Headers(request.headers);
 
-  supabaseResponse = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+// Always strip client-supplied identity headers first
+requestHeaders.delete('x-user-id');
+requestHeaders.delete('x-user-email');
+
+if (user) {
+  // Only set after Supabase has verified the session
+  requestHeaders.set('x-user-id', user.id);
+  requestHeaders.set('x-user-email', user.email || '');
 }
+
+supabaseResponse = NextResponse.next({
+  request: { headers: requestHeaders },
+});
   const pathname = request.nextUrl.pathname;
   if (protectedRoutes.some((route) => pathname.startsWith(route))) {
     if (error || !user) {
@@ -108,7 +87,7 @@ if (user) {
   ) {
     if (request.nextUrl.pathname.startsWith('/api/chatbot')) {
       return NextResponse.next();
-    }     
+    }
 
     if (!validateCsrfOrigin(request)) {
       return NextResponse.json(
