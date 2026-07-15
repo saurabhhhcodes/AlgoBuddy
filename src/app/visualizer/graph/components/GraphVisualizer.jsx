@@ -406,6 +406,10 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   // Derived flags
   const isWeighted = weightedAlgorithms.has(algorithm);
   const isDirected = isDirectedManual !== null ? isDirectedManual : directedAlgorithms.has(algorithm);
+  const hasNegativeDijkstraWeight = algorithm === "dijkstra" && edges.some((edge) => {
+    const weight = Number(edge.weight);
+    return Number.isFinite(weight) && weight < 0;
+  });
 
   const frames = useMemo(() => {
     const adj = {};
@@ -506,6 +510,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   }, [algorithm, isDirected, engine]);
 
   const togglePlay = () => {
+    if (hasNegativeDijkstraWeight) return;
+
     if (engine.currentStep === frames.length - 1 && frames.length > 0) {
       engine.reset();
       setTimeout(() => engine.play(), 50);
@@ -523,11 +529,13 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   };
 
   const stepForward = () => {
+    if (hasNegativeDijkstraWeight) return;
     engine.stepForward();
     setIsEditing(false);
   };
 
   const stepBackward = () => {
+    if (hasNegativeDijkstraWeight) return;
     engine.stepBackward();
     setIsEditing(false);
   };
@@ -782,6 +790,18 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
                 )}
               </div>
             )}
+
+            {hasNegativeDijkstraWeight && (
+              <div
+                className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300"
+                role="alert"
+              >
+                <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>
+                  Dijkstra cannot run with negative edge weights. Use Bellman-Ford or update the edge weights.
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -814,7 +834,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
           onStepBackward={stepBackward}
           onReset={reset}
           progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
-          disabled={frames.length === 0}
+          disabled={frames.length === 0 || hasNegativeDijkstraWeight}
         />
       </div>
 
