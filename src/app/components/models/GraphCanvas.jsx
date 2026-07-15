@@ -103,6 +103,7 @@ export default function GraphCanvas({
   const svgRef = useRef(null);
   const [edgeStart, setEdgeStart] = useState(null);
   const [draggingNode, setDraggingNode] = useState(null);
+  const [hoveredNode, setHoveredNode] = useState(null);
   const getNodeState = (id) => {
     if (animationState.visitingNodes?.has(id) || id === currentNode) return "visiting";
     if (animationState.visitedNodes?.has(id) || visitedSet?.has(id)) return "visited";
@@ -187,22 +188,6 @@ const handleTouchMove = useCallback(
   [draggingNode, onMoveNode]
 );
 
-const handleTouchMove = useCallback(
-  (e) => {
-    if (!draggingNode || !onMoveNode || !svgRef.current) return;
-    
-    const touch = e.touches[0];
-    const rect = svgRef.current.getBoundingClientRect();
-
-    onMoveNode(
-      draggingNode,
-      touch.clientX - rect.left,
-      touch.clientY - rect.top
-    );
-  },
-  [draggingNode, onMoveNode]
-);
-
 const handleMouseUp = useCallback(() => {
   setDraggingNode(null);
 }, []);
@@ -233,6 +218,26 @@ const handleMouseUp = useCallback(() => {
 
   const nodeMap = Object.fromEntries(nodes.map((n) => [n.id, n]));
 
+  const formatMetric = (value) => {
+    if (value === undefined || value === null) return null;
+    return value === Infinity ? "Infinity" : String(value);
+  };
+
+  const getNodeTooltip = (node) => {
+    const metrics = [
+      ["Distance", animationState.distances?.[node.id]],
+      ["gScore", animationState.gScore?.[node.id]],
+      ["fScore", animationState.fScore?.[node.id]],
+    ]
+      .map(([label, value]) => [label, formatMetric(value)])
+      .filter(([, value]) => value !== null);
+
+    return {
+      state: getNodeState(node.id),
+      metrics,
+    };
+  };
+
   const isActiveEdge = (edge) => {
     const active = animationState.activeEdge;
     const mstEdges = animationState.mstEdges || [];
@@ -250,20 +255,23 @@ const handleMouseUp = useCallback(() => {
   };
 
   return (
-    <svg
-      ref={svgRef}
-      width="100%"
-      height="100%"
-      className={className}
-      style={{ cursor: interactive && edgeStart !== null ? "crosshair" : "default", minHeight: 420 }}
-      onClick={handleCanvasClick}
-      onMouseMove={handleMouseMove}
-      onTouchMove={handleTouchMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onTouchEnd={handleMouseUp}
-      onTouchCancel={handleMouseUp}
-    >
+    <div className="relative w-full overflow-hidden">
+      <TransformWrapper>
+        <TransformComponent>
+        <svg
+          ref={svgRef}
+          width="100%"
+          height="100%"
+          className={className}
+          style={{ cursor: interactive && edgeStart !== null ? "crosshair" : "default", minHeight: 420 }}
+          onClick={handleCanvasClick}
+          onMouseMove={handleMouseMove}
+          onTouchMove={handleTouchMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchEnd={handleMouseUp}
+          onTouchCancel={handleMouseUp}
+        >
       <defs>
         <marker
           id="arrowhead"
@@ -367,8 +375,16 @@ const handleMouseUp = useCallback(() => {
             onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
             onTouchStart={(e) => handleNodeMouseDown(e, node.id)}
             onContextMenu={(e) => handleNodeRightClick(e, node.id)}
+            onMouseEnter={() => setHoveredNode(node.id)}
+            onMouseLeave={() => setHoveredNode(null)}
+            onFocus={() => setHoveredNode(node.id)}
+            onBlur={() => setHoveredNode(null)}
+            tabIndex={0}
             style={{ cursor: interactive ? "pointer" : "default" }}
           >
+            <title>
+              {`${node.label || node.id}: ${getNodeTooltip(node).state}`}
+            </title>
             {isSelected && (
               <circle
                 cx={node.x}
@@ -401,6 +417,26 @@ const handleMouseUp = useCallback(() => {
             >
               {node.id}
             </text>
+            {hoveredNode === node.id && (() => {
+              const tooltip = getNodeTooltip(node);
+              return (
+                <foreignObject
+                  x={node.x - 70}
+                  y={node.y - NODE_RADIUS - 82}
+                  width={140}
+                  height={72}
+                  className="pointer-events-none overflow-visible"
+                >
+                  <div className="rounded-md border border-slate-600 bg-slate-950/95 px-2 py-1.5 text-[10px] leading-4 text-white shadow-lg">
+                    <div className="font-semibold">{node.label || node.id}</div>
+                    <div>State: {tooltip.state}</div>
+                    {tooltip.metrics.map(([label, value]) => (
+                      <div key={label}>{label}: {value}</div>
+                    ))}
+                  </div>
+                </foreignObject>
+              );
+            })()}
           </g>
         );
       })}
@@ -423,7 +459,7 @@ const handleMouseUp = useCallback(() => {
           Click another node to connect · click same node or press Esc to cancel
         </text>
       )}
-      </svg>
+          </svg>
         </TransformComponent>
       </TransformWrapper>
     </div>
