@@ -1,6 +1,7 @@
 // app/components/models/GraphCanvas.jsx
 "use client";
 import { useRef, useState, useCallback } from "react";
+import { Download } from "lucide-react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 const NODE_RADIUS = 26;
@@ -9,6 +10,15 @@ const COLORS = {
   visiting:  { fill: "#854d0e", stroke: "#f97316" },
   visited:   { fill: "#14532d", stroke: "#22c55e" },
 };
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 function edgeEndpoint(x1, y1, x2, y2, radius) {
   const dx = x2 - x1, dy = y2 - y1;
@@ -187,22 +197,6 @@ const handleTouchMove = useCallback(
   [draggingNode, onMoveNode]
 );
 
-const handleTouchMove = useCallback(
-  (e) => {
-    if (!draggingNode || !onMoveNode || !svgRef.current) return;
-    
-    const touch = e.touches[0];
-    const rect = svgRef.current.getBoundingClientRect();
-
-    onMoveNode(
-      draggingNode,
-      touch.clientX - rect.left,
-      touch.clientY - rect.top
-    );
-  },
-  [draggingNode, onMoveNode]
-);
-
 const handleMouseUp = useCallback(() => {
   setDraggingNode(null);
 }, []);
@@ -249,21 +243,93 @@ const handleMouseUp = useCallback(() => {
     );
   };
 
+  const exportSvg = useCallback(() => {
+    if (!svgRef.current) return;
+
+    const clone = svgRef.current.cloneNode(true);
+    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    clone.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+    clone.setAttribute("width", String(svgRef.current.clientWidth || 800));
+    clone.setAttribute("height", String(svgRef.current.clientHeight || 420));
+
+    const serialized = new XMLSerializer().serializeToString(clone);
+    downloadBlob(
+      new Blob([serialized], { type: "image/svg+xml;charset=utf-8" }),
+      "algobuddy-graph.svg",
+    );
+  }, []);
+
+  const exportPng = useCallback(() => {
+    if (!svgRef.current) return;
+
+    const svg = svgRef.current;
+    const width = svg.clientWidth || 800;
+    const height = svg.clientHeight || 420;
+    const clone = svg.cloneNode(true);
+    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    clone.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+    clone.setAttribute("width", String(width));
+    clone.setAttribute("height", String(height));
+
+    const source = new XMLSerializer().serializeToString(clone);
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      const scale = 2;
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      const context = canvas.getContext("2d");
+      if (!context) return;
+
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.scale(scale, scale);
+      context.drawImage(image, 0, 0, width, height);
+      canvas.toBlob((blob) => {
+        if (blob) downloadBlob(blob, "algobuddy-graph.png");
+      }, "image/png");
+    };
+    image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(source)}`;
+  }, []);
+
   return (
-    <svg
-      ref={svgRef}
-      width="100%"
-      height="100%"
-      className={className}
-      style={{ cursor: interactive && edgeStart !== null ? "crosshair" : "default", minHeight: 420 }}
-      onClick={handleCanvasClick}
-      onMouseMove={handleMouseMove}
-      onTouchMove={handleTouchMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onTouchEnd={handleMouseUp}
-      onTouchCancel={handleMouseUp}
-    >
+    <div className="relative w-full overflow-hidden">
+      <div className="mb-2 flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={exportSvg}
+          className="inline-flex items-center gap-1.5 rounded-md border border-surface-300 px-2.5 py-1.5 text-xs font-medium text-surface-700 hover:border-primary hover:text-primary dark:border-surface-700 dark:text-surface-200"
+          title="Download the graph as SVG"
+        >
+          <Download className="h-3.5 w-3.5" aria-hidden="true" />
+          SVG
+        </button>
+        <button
+          type="button"
+          onClick={exportPng}
+          className="inline-flex items-center gap-1.5 rounded-md border border-surface-300 px-2.5 py-1.5 text-xs font-medium text-surface-700 hover:border-primary hover:text-primary dark:border-surface-700 dark:text-surface-200"
+          title="Download the graph as PNG"
+        >
+          <Download className="h-3.5 w-3.5" aria-hidden="true" />
+          PNG
+        </button>
+      </div>
+      <TransformWrapper>
+        <TransformComponent>
+          <svg
+            ref={svgRef}
+            width="100%"
+            height="100%"
+            className={className}
+            style={{ cursor: interactive && edgeStart !== null ? "crosshair" : "default", minHeight: 420 }}
+            onClick={handleCanvasClick}
+            onMouseMove={handleMouseMove}
+            onTouchMove={handleTouchMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onTouchEnd={handleMouseUp}
+            onTouchCancel={handleMouseUp}
+          >
       <defs>
         <marker
           id="arrowhead"
@@ -423,7 +489,7 @@ const handleMouseUp = useCallback(() => {
           Click another node to connect · click same node or press Esc to cancel
         </text>
       )}
-      </svg>
+          </svg>
         </TransformComponent>
       </TransformWrapper>
     </div>
