@@ -43,6 +43,22 @@ import {
 
 const weightedAlgorithms = new Set(["dijkstra", "bellman-ford", "floyd-warshall", "prim", "kruskal", "a-star", "ford-fulkerson"]);
 const directedAlgorithms = new Set(["dijkstra", "bellman-ford", "floyd-warshall", "topological-sort", "kosaraju", "tarjan", "a-star", "ford-fulkerson"]);
+const CUSTOM_GRAPH_STORAGE_PREFIX = "algobuddy:custom-graph:";
+
+function readStoredGraph(algorithm) {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const stored = window.localStorage.getItem(`${CUSTOM_GRAPH_STORAGE_PREFIX}${algorithm}`);
+    if (!stored) return null;
+
+    const graph = JSON.parse(stored);
+    if (!Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) return null;
+    return graph;
+  } catch {
+    return null;
+  }
+}
 
 const defaultGraphs = {
   bfs: {
@@ -396,12 +412,34 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   const [edges, setEdges] = useState(defaultGraphs[algorithm]?.edges || []);
   const [isEditing, setIsEditing] = useState(true);
   const [targetNode, setTargetNode] = useState("");
+  const [hasCustomGraph, setHasCustomGraph] = useState(false);
 
   const [isDirectedManual, setIsDirectedManual] = useState(null);
 
   useEffect(() => {
     setIsDirectedManual(null);
+    const storedGraph = readStoredGraph(algorithm);
+    if (storedGraph) {
+      setNodes(storedGraph.nodes);
+      setEdges(storedGraph.edges);
+      setHasCustomGraph(true);
+    } else {
+      setHasCustomGraph(false);
+    }
   }, [algorithm]);
+
+  useEffect(() => {
+    if (!hasCustomGraph || typeof window === "undefined") return;
+
+    try {
+      window.localStorage.setItem(
+        `${CUSTOM_GRAPH_STORAGE_PREFIX}${algorithm}`,
+        JSON.stringify({ nodes, edges }),
+      );
+    } catch {
+      // Storage can be unavailable in private browsing or restricted contexts.
+    }
+  }, [algorithm, edges, hasCustomGraph, nodes]);
 
   // Derived flags
   const isWeighted = weightedAlgorithms.has(algorithm);
@@ -456,6 +494,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
 
   // Handle edge weight updates from GraphCanvas
   const handleUpdateEdgeWeight = useCallback((edgeIdx, newWeight) => {
+    setHasCustomGraph(true);
     setEdges((prev) =>
       prev.map((e, i) => (i === edgeIdx ? { ...e, weight: newWeight } : e))
     );
@@ -464,12 +503,15 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
 
   // When adding an edge, default weight = 1
   const handleAddEdge = useCallback((edge) => {
+    setHasCustomGraph(true);
     setEdges((prev) => [...prev, { ...edge, weight: 1, directed: isDirected }]);
     engine.reset();
   }, [isDirected, engine]);
 
   const handleCustomGraphInput = useCallback((parsedEdges) => {
     if (parsedEdges === null) {
+      window.localStorage.removeItem(`${CUSTOM_GRAPH_STORAGE_PREFIX}${algorithm}`);
+      setHasCustomGraph(false);
       setNodes(defaultGraphs[algorithm]?.nodes || []);
       setEdges(defaultGraphs[algorithm]?.edges || []);
     } else {
@@ -501,6 +543,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
 
       setNodes(newNodes);
       setEdges(newEdges);
+      setHasCustomGraph(true);
     }
     engine.reset();
   }, [algorithm, isDirected, engine]);
@@ -546,6 +589,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   const nodeLabelById = Object.fromEntries(nodes.map((node) => [node.id, node.label || node.id]));
 
   const addNode = ({ x, y }) => {
+    setHasCustomGraph(true);
     const usedIds = new Set(nodes.map((node) => node.id));
     let nextId = `${nodes.length}`;
     let counter = nodes.length;
@@ -567,6 +611,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   };
 
   const moveNode = (id, x, y) => {
+    setHasCustomGraph(true);
     setNodes((current) =>
       current.map((node) =>
         node.id === id
@@ -577,12 +622,14 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   };
 
   const removeNode = (id) => {
+    setHasCustomGraph(true);
     setNodes((current) => current.filter((node) => node.id !== id));
     setEdges((current) => current.filter((edge) => edge.from !== id && edge.to !== id));
     engine.reset();
   };
 
   const removeEdge = (edgeIndex) => {
+    setHasCustomGraph(true);
     setEdges((current) => current.filter((_, index) => index !== edgeIndex));
     engine.reset();
   };
@@ -646,6 +693,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   }, [isWeighted, isDirected, engine]);
 
   const reverseEdge = (edgeIndex) => {
+    setHasCustomGraph(true);
     setEdges((current) =>
       current.map((edge, index) =>
         index === edgeIndex ? { ...edge, from: edge.to, to: edge.from } : edge,
