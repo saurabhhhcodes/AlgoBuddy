@@ -396,6 +396,33 @@ const comparisonData = [
 export default function GraphVisualizer({ algorithm = "bfs", startNode: initialStartNode }) {
   const [nodes, setNodes] = useState(defaultGraphs[algorithm]?.nodes || []);
   const [edges, setEdges] = useState(defaultGraphs[algorithm]?.edges || []);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const savedNodes = localStorage.getItem(`algobuddy_custom_nodes_${algorithm}`);
+      const savedEdges = localStorage.getItem(`algobuddy_custom_edges_${algorithm}`);
+      if (savedNodes && savedEdges) {
+        setNodes(JSON.parse(savedNodes));
+        setEdges(JSON.parse(savedEdges));
+      } else {
+        setNodes(defaultGraphs[algorithm]?.nodes || []);
+        setEdges(defaultGraphs[algorithm]?.edges || []);
+      }
+    } catch (e) {
+      console.error("Failed to parse custom graph from localStorage", e);
+      setNodes(defaultGraphs[algorithm]?.nodes || []);
+      setEdges(defaultGraphs[algorithm]?.edges || []);
+    }
+    setIsLoaded(true);
+  }, [algorithm]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem(`algobuddy_custom_nodes_${algorithm}`, JSON.stringify(nodes));
+      localStorage.setItem(`algobuddy_custom_edges_${algorithm}`, JSON.stringify(edges));
+    }
+  }, [nodes, edges, algorithm, isLoaded]);
   const [isEditing, setIsEditing] = useState(true);
   const [targetNode, setTargetNode] = useState("");
 
