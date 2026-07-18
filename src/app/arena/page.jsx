@@ -368,7 +368,7 @@ export default function ArenaPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr_300px] gap-6">
 
           {/* ─── Column 1: Left Sidebar ────────────────────────────────────────── */}
-          <aside className="space-y-6">
+          <aside className="space-y-6 lg:sticky lg:top-24 h-max">
             {/* Navigation Menu */}
             <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-3 shadow-sm">
               <nav className="space-y-0.5">
@@ -1594,7 +1594,7 @@ export default function ArenaPage() {
           </main>
 
           {/* ─── Column 3: Right Sidebar ───────────────────────────────────────── */}
-          <aside className="space-y-6">
+          <aside className="space-y-6 lg:sticky lg:top-24 h-max">
             {/* Daily Streak Card */}
             <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:bg-amber-500/10 transition-colors duration-500"></div>
