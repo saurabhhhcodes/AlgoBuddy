@@ -1394,6 +1394,7 @@ export default function ArenaPage() {
                           ))}
                         </div>
                     </div>
+                    </div>
 
                     {/* Filter Tabs */}
                     <div className="flex items-center gap-2 border-b border-slate-200 dark:border-neutral-800 pb-px overflow-x-auto no-scrollbar">
