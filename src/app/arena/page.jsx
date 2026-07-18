@@ -1396,23 +1396,26 @@ export default function ArenaPage() {
                     </div>
 
                     {/* Filter Tabs */}
-                    <div className="flex items-center gap-2 border-b border-slate-200 dark:border-neutral-800 pb-px overflow-x-auto no-scrollbar">
-                      {["Live", "Upcoming", "Past"].map((filter) => (
+                    <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-neutral-800/50 rounded-xl overflow-x-auto no-scrollbar">
+                      {[
+                        { id: "Live", icon: Play },
+                        { id: "Upcoming", icon: Calendar },
+                        { id: "Past", icon: History },
+                        { id: "Bracket", icon: Trophy }
+                      ].map((filter) => (
                         <button
-                          key={filter}
-                          onClick={() => setTournamentFilter(filter)}
-                          className={`px-4 py-2 text-sm font-bold relative transition-colors ${
-                            tournamentFilter === filter
-                              ? "text-primary dark:text-primary-light"
-                              : "text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-neutral-300"
+                          key={filter.id}
+                          onClick={() => setTournamentFilter(filter.id)}
+                          className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${
+                            tournamentFilter === filter.id
+                              ? "bg-white dark:bg-neutral-700 text-primary dark:text-primary-light shadow-sm"
+                              : "text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-neutral-300 hover:bg-slate-200/50 dark:hover:bg-neutral-700/50"
                           }`}
                         >
-                          {filter}
-                          {tournamentFilter === filter && (
-                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-t-full"></div>
-                          )}
-                          {filter === "Live" && (
-                            <span className="absolute top-1.5 -right-1 flex h-2 w-2">
+                          <filter.icon size={16} className={tournamentFilter === filter.id ? "text-primary dark:text-primary-light" : "opacity-70"} />
+                          {filter.id}
+                          {filter.id === "Live" && (
+                            <span className="relative flex h-2 w-2 ml-1">
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                               <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                             </span>
@@ -1506,6 +1509,94 @@ export default function ArenaPage() {
                             </button>
                           </div>
                         ))}
+                      </div>
+                    ) : tournamentFilter === "Bracket" ? (
+                      <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-6 shadow-sm overflow-x-auto">
+                        <div className="min-w-[700px]">
+                          <div className="flex justify-between items-center mb-8">
+                            <h3 className="text-base font-bold text-slate-800 dark:text-neutral-200">Weekly Cup - Playoffs</h3>
+                            <div className="flex gap-4 text-xs font-bold text-slate-500">
+                              <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Winner</span>
+                              <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-neutral-600"></div> Eliminated</span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-between relative">
+                            {/* Round 1: Quarterfinals */}
+                            <div className="flex flex-col justify-around h-[400px] w-64 z-10">
+                              {[
+                                { p1: "Alex Chen", s1: 400, p2: "David K.", s2: 320, w: 1 },
+                                { p1: "Sarah J.", s1: 380, p2: "Mike T.", s2: 390, w: 2 },
+                                { p1: "You", s1: 400, p2: "Anna L.", s2: 350, w: 1, isYou: true },
+                                { p1: "John D.", s1: 310, p2: "Emma W.", s2: 370, w: 2 }
+                              ].map((match, i) => (
+                                <div key={i} className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow relative">
+                                  <div className={`p-2 flex justify-between items-center text-sm ${match.w === 1 ? 'bg-emerald-50 dark:bg-emerald-900/10 font-bold text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-neutral-400 opacity-70'} ${match.isYou && match.w === 1 ? 'border-l-2 border-primary' : ''}`}>
+                                    <span>{match.p1}</span>
+                                    <span>{match.s1}</span>
+                                  </div>
+                                  <div className="h-px w-full bg-slate-100 dark:bg-neutral-800"></div>
+                                  <div className={`p-2 flex justify-between items-center text-sm ${match.w === 2 ? 'bg-emerald-50 dark:bg-emerald-900/10 font-bold text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-neutral-400 opacity-70'} ${match.isYou && match.w === 2 ? 'border-l-2 border-primary' : ''}`}>
+                                    <span>{match.p2}</span>
+                                    <span>{match.s2}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Connecting Lines QF to SF */}
+                            <svg className="absolute left-64 top-0 w-16 h-full pointer-events-none stroke-slate-200 dark:stroke-neutral-700 stroke-2 fill-none" preserveAspectRatio="none">
+                              <path d="M0,50 L32,50 L32,150 L64,150" />
+                              <path d="M0,150 L32,150" />
+                              <path d="M0,250 L32,250 L32,350 L64,350" />
+                              <path d="M0,350 L32,350" />
+                            </svg>
+
+                            {/* Round 2: Semifinals */}
+                            <div className="flex flex-col justify-around h-[400px] w-64 ml-16 z-10">
+                              {[
+                                { p1: "Alex Chen", s1: 390, p2: "Mike T.", s2: 400, w: 2 },
+                                { p1: "You", s1: 400, p2: "Emma W.", s2: 380, w: 1, isYou: true }
+                              ].map((match, i) => (
+                                <div key={i} className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow relative">
+                                  <div className={`p-2 flex justify-between items-center text-sm ${match.w === 1 ? 'bg-emerald-50 dark:bg-emerald-900/10 font-bold text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-neutral-400 opacity-70'} ${match.isYou && match.w === 1 ? 'border-l-2 border-primary' : ''}`}>
+                                    <span>{match.p1}</span>
+                                    <span>{match.s1}</span>
+                                  </div>
+                                  <div className="h-px w-full bg-slate-100 dark:bg-neutral-800"></div>
+                                  <div className={`p-2 flex justify-between items-center text-sm ${match.w === 2 ? 'bg-emerald-50 dark:bg-emerald-900/10 font-bold text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-neutral-400 opacity-70'} ${match.isYou && match.w === 2 ? 'border-l-2 border-primary' : ''}`}>
+                                    <span>{match.p2}</span>
+                                    <span>{match.s2}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            
+                            {/* Connecting Lines SF to Final */}
+                            <svg className="absolute left-[34rem] top-0 w-16 h-full pointer-events-none stroke-slate-200 dark:stroke-neutral-700 stroke-2 fill-none" preserveAspectRatio="none">
+                              <path d="M0,150 L32,150 L32,250 L64,250" />
+                              <path d="M0,350 L32,350 L32,250" />
+                            </svg>
+
+                            {/* Round 3: Final */}
+                            <div className="flex flex-col justify-center h-[400px] w-64 ml-16 z-10">
+                              <div className="bg-white dark:bg-neutral-900 border-2 border-amber-400/50 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow relative ring-4 ring-amber-400/10">
+                                <div className="absolute top-0 right-0 p-1">
+                                  <Crown size={12} className="text-amber-500 opacity-50" />
+                                </div>
+                                <div className="p-3 flex justify-between items-center font-bold bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-base">
+                                  <span className="flex items-center gap-2"><Trophy size={14} /> You</span>
+                                  <span>400</span>
+                                </div>
+                                <div className="h-px w-full bg-amber-200 dark:bg-amber-900/50"></div>
+                                <div className="p-3 flex justify-between items-center text-sm text-slate-500 dark:text-neutral-400 opacity-70">
+                                  <span>Mike T.</span>
+                                  <span>395</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
