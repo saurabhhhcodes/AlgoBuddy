@@ -1,12 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/hooks/useAuth";
+import { useUser } from "@/features/user/UserContext";
 import DuelSimulatorModal from "@/app/components/ui/DuelSimulatorModal";
 
 export default function DuelLobbyPage({ params }) {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading } = useUser();
   
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [opponent, setOpponent] = useState(null);
@@ -128,6 +128,7 @@ export default function DuelLobbyPage({ params }) {
         isOpen={simulatorOpen}
         onClose={() => setSimulatorOpen(false)}
         opponent={opponent}
+        currentUserStats={{ userId: user?.id, name: user?.user_metadata?.name || user?.email?.split('@')[0] }}
         problem="Arrays"
       />
     </div>

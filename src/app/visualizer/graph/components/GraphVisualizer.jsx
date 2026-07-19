@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
-import { 
+import React, { useState, useMemo, useCallback, useEffect } from "react";
+import {
   Settings2,
   BarChart3,
-  Info
+  Info,
+  Trash2,
+  Wand2
 } from "lucide-react";
 import { 
   BarChart, 
@@ -78,6 +80,28 @@ const defaultGraphs = {
     ]
   },
   dijkstra: {
+    nodes: [
+      { id: "0", x: 100, y: 250, label: "A" },
+      { id: "1", x: 300, y: 100, label: "B" },
+      { id: "2", x: 300, y: 400, label: "C" },
+      { id: "3", x: 500, y: 100, label: "D" },
+      { id: "4", x: 500, y: 400, label: "E" },
+      { id: "5", x: 700, y: 250, label: "F" },
+    ],
+    edges: [
+      { from: "0", to: "1", weight: 4, directed: true },
+      { from: "0", to: "2", weight: 2, directed: true },
+      { from: "1", to: "3", weight: 5, directed: true },
+      { from: "1", to: "2", weight: 1, directed: true },
+      { from: "2", to: "1", weight: 8, directed: true },
+      { from: "2", to: "3", weight: 10, directed: true },
+      { from: "2", to: "4", weight: 3, directed: true },
+      { from: "3", to: "5", weight: 2, directed: true },
+      { from: "4", to: "3", weight: 4, directed: true },
+      { from: "4", to: "5", weight: 6, directed: true },
+    ]
+  },
+  "a-star": {
     nodes: [
       { id: "0", x: 100, y: 250, label: "A" },
       { id: "1", x: 300, y: 100, label: "B" },
@@ -373,9 +397,15 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   const [isEditing, setIsEditing] = useState(true);
   const [targetNode, setTargetNode] = useState("");
 
+  const [isDirectedManual, setIsDirectedManual] = useState(null);
+
+  useEffect(() => {
+    setIsDirectedManual(null);
+  }, [algorithm]);
+
   // Derived flags
   const isWeighted = weightedAlgorithms.has(algorithm);
-  const isDirected = directedAlgorithms.has(algorithm);
+  const isDirected = isDirectedManual !== null ? isDirectedManual : directedAlgorithms.has(algorithm);
 
   const frames = useMemo(() => {
     const adj = {};
@@ -391,9 +421,12 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     });
 
     const startNodeId = initialStartNode || (nodes.length > 0 ? nodes[0].id : null);
+    const finalGoalNodeId = targetNode || (nodes.length > 1 ? nodes[nodes.length - 1].id : null);
+    
     if (algorithm === "bfs") return Array.from(bfsGenerator(adj, startNodeId));
     if (algorithm === "dfs") return Array.from(dfsGenerator(adj, startNodeId));
     if (algorithm === "dijkstra") return Array.from(dijkstraGenerator(adj, startNodeId, targetNode || null));
+    if (algorithm === "a-star") return Array.from(aStarGenerator(nodes, edges, startNodeId, finalGoalNodeId));
     if (algorithm === "bellman-ford") return Array.from(bellmanFordGenerator(nodes, edges, startNodeId));
     if (algorithm === "floyd-warshall") return Array.from(floydWarshallGenerator(nodes, edges));
     if (algorithm === "prim") return Array.from(primGenerator(adj, startNodeId));
@@ -554,6 +587,64 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     engine.reset();
   };
 
+  const clearGraph = useCallback(() => {
+    setNodes([]);
+    setEdges([]);
+    engine.reset();
+  }, [engine]);
+
+  const generateRandomGraph = useCallback(() => {
+    const input = window.prompt("Enter number of nodes (max 20):", "6");
+    if (!input) return;
+    const count = parseInt(input, 10);
+    if (isNaN(count) || count < 2 || count > 20) {
+      alert("Please enter a valid number between 2 and 20.");
+      return;
+    }
+
+    const newNodes = [];
+    for (let i = 0; i < count; i++) {
+      newNodes.push({
+        id: String(i),
+        x: Math.floor(Math.random() * 600) + 100,
+        y: Math.floor(Math.random() * 300) + 50,
+        label: String(i),
+      });
+    }
+
+    const newEdges = [];
+    for (let i = 1; i < count; i++) {
+      const parent = Math.floor(Math.random() * i);
+      newEdges.push({
+        from: String(parent),
+        to: String(i),
+        weight: isWeighted ? Math.floor(Math.random() * 20) + 1 : 1,
+        directed: isDirected
+      });
+    }
+
+    const extraEdges = Math.floor(count * 0.5);
+    for (let i = 0; i < extraEdges; i++) {
+      const fromIdx = Math.floor(Math.random() * count);
+      const toIdx = Math.floor(Math.random() * count);
+      if (fromIdx !== toIdx) {
+        const exists = newEdges.some(e => (e.from === String(fromIdx) && e.to === String(toIdx)) || (!isDirected && e.from === String(toIdx) && e.to === String(fromIdx)));
+        if (!exists) {
+          newEdges.push({
+            from: String(fromIdx),
+            to: String(toIdx),
+            weight: isWeighted ? Math.floor(Math.random() * 20) + 1 : 1,
+            directed: isDirected
+          });
+        }
+      }
+    }
+
+    setNodes(newNodes);
+    setEdges(newEdges);
+    engine.reset();
+  }, [isWeighted, isDirected, engine]);
+
   const reverseEdge = (edgeIndex) => {
     setEdges((current) =>
       current.map((edge, index) =>
@@ -580,7 +671,26 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
               {isEditing ? "Editing Mode" : "Visualization Mode"}
             </button>
 
-            {algorithm === "dijkstra" && (
+            {isEditing && (
+              <>
+                <button
+                  onClick={clearGraph}
+                  className="flex items-center gap-2 rounded-lg bg-red-100 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Clear Graph
+                </button>
+                <button
+                  onClick={generateRandomGraph}
+                  className="flex items-center gap-2 rounded-lg bg-indigo-100 px-3 py-1.5 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
+                >
+                  <Wand2 className="h-4 w-4" />
+                  Random Graph
+                </button>
+              </>
+            )}
+
+            {["dijkstra", "a-star", "ford-fulkerson"].includes(algorithm) && (
               <div className="flex items-center gap-2 ml-2">
                 <label className="text-sm font-medium text-surface-600 dark:text-surface-300">Target Node:</label>
                 <select
@@ -591,7 +701,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
                   }}
                   className="bg-surface-50 border border-surface-200 dark:bg-surface-800 dark:border-surface-600 rounded px-2 py-1 text-sm text-surface-900 dark:text-white"
                 >
-                  <option value="">None (Traverse all)</option>
+                  {algorithm !== "a-star" && <option value="">None (Traverse all)</option>}
                   {nodes.map(n => (
                     <option key={n.id} value={n.id}>{n.label || n.id}</option>
                   ))}
@@ -606,12 +716,26 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
               </span>
             )}
 
-            {/* Directed badge */}
-            {isDirected && (
-              <span className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
-                Directed
-              </span>
-            )}
+            {/* Directed/Undirected Toggle */}
+            <button
+              onClick={() => {
+                if (!isEditing) return;
+                const nextIsDirected = !isDirected;
+                setIsDirectedManual(nextIsDirected);
+                setEdges(prev => prev.map(e => ({ ...e, directed: nextIsDirected })));
+                engine.reset();
+              }}
+              disabled={!isEditing}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                isDirected 
+                  ? "border-primary/30 bg-primary/10 text-primary" 
+                  : "border-surface-400/30 bg-surface-400/10 text-surface-600 dark:text-surface-400"
+              } ${isEditing ? "hover:bg-primary/20 cursor-pointer" : "cursor-default"}`}
+            >
+              {isDirected ? "Directed" : "Undirected"}
+            </button>
+
+
 
             {!isEditing && (
               <div className="flex flex-wrap items-center gap-2">
