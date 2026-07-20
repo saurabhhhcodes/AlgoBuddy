@@ -6,19 +6,32 @@ export default function DiscussionThread({ topicId }) {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const PAGE_SIZE = 20;
+
+  const loadComments = async (fromOffset = 0) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/comments/${encodeURIComponent(topicId)}?limit=${PAGE_SIZE}&offset=${fromOffset}`);
+      const data = await res.json();
+      const fetched = data.comments || [];
+      setComments(fromOffset === 0 ? fetched : (prev) => [...prev, ...fetched]);
+      setOffset(fromOffset + fetched.length);
+      setHasMore(Boolean(data.hasMore));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetch(`/api/comments/${encodeURIComponent(topicId)}`)
-      .then(res => res.json())
-      .then(data => {
-        setComments(data.comments || []);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
+    loadComments(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicId]);
+
+  const handleLoadMore = () => loadComments(offset);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -78,6 +91,16 @@ export default function DiscussionThread({ topicId }) {
             </div>
           ))}
         </div>
+      )}
+      {hasMore && (
+        <button
+          type="button"
+          onClick={handleLoadMore}
+          disabled={loading}
+          className="mt-6 mx-auto block bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white px-6 py-2 rounded transition-colors"
+        >
+          {loading ? "Loading..." : "Load more comments"}
+        </button>
       )}
     </div>
   );
