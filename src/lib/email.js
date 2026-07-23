@@ -1,4 +1,5 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
 export async function sendEmail({ to, subject, html }) {
   if (!RESEND_API_KEY) {
@@ -14,7 +15,7 @@ export async function sendEmail({ to, subject, html }) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "AlgoBuddy <notifications@algobuddy.com>",
+        from: RESEND_FROM_EMAIL,
         to,
         subject,
         html,

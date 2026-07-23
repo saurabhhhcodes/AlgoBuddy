@@ -671,7 +671,7 @@ export const practiceData = [
                 "Base case: when index reaches the end of the array, add the current subnet to the result.",
                 "Backtrack by removing the last added element before trying the next choice."
               ],
-              comlexity: { time: "0(2^N)", space:"0(N) recursion stack"},
+              complexity: { time: "0(2^N)", space:"0(N) recursion stack"},
               pitfalls: "Forgetting to backtrack (remove the element) after the 'include' branch, which causes wrong subnets to carry over into later paths.",
               tip:" This 'include or exclude' patter is the foundation for many backtracking problem like combination sum and permutation = master this first!"
             }
